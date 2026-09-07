@@ -94,6 +94,13 @@
       this.vaultDB = new FrameVaultDB();
       this.activeFrameId = 'none';
 
+      // Kho Sticker & Custom Text Layer (Gói 1)
+      this.stickers = [];
+      this.activeStickerId = null;
+      this.currentStickerCat = 'y2k';
+      this.selectedTextColor = '#ffffff';
+      this.selectedTextFont = 'font-serif';
+
       this.state = {
         layout: 'strip-4',
         totalShots: 8,
@@ -102,7 +109,8 @@
         mirror: true,
         stripColor: '#0c0c0e',
         caption: 'MÈO BÉO & HỘI BẠN THÂN',
-        showDate: true
+        showDate: true,
+        dateStyle: 'orange-film'
       };
 
       this.exportResults = {
@@ -117,6 +125,7 @@
       this.bindEvents();
       this.updateRailSlots();
       this.refreshCameraDevices();
+      this.initStickerCatalog();
 
       // 2. Khởi động Vault Khung & nạp token Canva
       try {
@@ -728,16 +737,109 @@
       ctx.fillText((this.state.caption || 'BUỒNG CHỤP ẢNH').toUpperCase(), w / 2, h - 85);
 
       if (this.state.showDate && !this.customCanvaFrame) {
-        ctx.font = '600 20px "JetBrains Mono", monospace';
-        ctx.fillStyle = isDark ? '#d97706' : '#b45309';
         const now = new Date();
-        const dateStr = `${String(now.getDate()).padStart(2, '0')}.${String(now.getMonth() + 1).padStart(2, '0')}.${now.getFullYear()} • 35MM FILM ARCHIVE`;
-        ctx.fillText(dateStr, w / 2, h - 48);
+        const dd = String(now.getDate()).padStart(2, '0');
+        const mm = String(now.getMonth() + 1).padStart(2, '0');
+        const yyyy = now.getFullYear();
+        const monthsShort = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+        const mShort = monthsShort[now.getMonth()];
+        const yyShort = String(yyyy).slice(-2);
+        const style = this.state.dateStyle || 'orange-film';
+
+        if (style === 'orange-film') {
+          ctx.font = '700 24px "JetBrains Mono", monospace';
+          ctx.fillStyle = '#ea580c';
+          ctx.shadowColor = 'rgba(234, 88, 12, 0.45)';
+          ctx.shadowBlur = 6;
+          const dateStr = `'${yyShort} ${mm} ${dd}  ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+          ctx.fillText(dateStr, w / 2, h - 48);
+          ctx.shadowBlur = 0;
+        } else if (style === 'kpop-star') {
+          ctx.font = '800 20px "Be Vietnam Pro", sans-serif';
+          ctx.fillStyle = isDark ? '#fbbf24' : '#b45309';
+          ctx.fillText(`★ ${dd}.${mm}.${yyyy} • 35MM ARCHIVE ★`, w / 2, h - 48);
+        } else if (style === 'polaroid') {
+          ctx.font = '600 21px "JetBrains Mono", monospace';
+          ctx.fillStyle = isDark ? '#94a3b8' : '#475569';
+          ctx.fillText(`${mShort} ${dd} '${yyShort} • PHOTOBOOTH`, w / 2, h - 48);
+        } else {
+          // classic-dot
+          ctx.font = '700 22px "JetBrains Mono", monospace';
+          ctx.fillStyle = isDark ? '#d97706' : '#b45309';
+          ctx.fillText(`${dd}/${mm}/${yyyy}`, w / 2, h - 48);
+        }
       }
 
-      // 5. Nếu có Khung Custom Canva (PNG trong suốt), vẽ phủ lên trên cùng
+      // 4. Nếu có Khung Custom Canva (PNG trong suốt), vẽ phủ lên trên cùng
       if (this.customCanvaFrame) {
         ctx.drawImage(this.customCanvaFrame, 0, 0, w, h);
+      }
+
+      // 5. Vẽ toàn bộ Sticker & Custom Text lên Canvas (Chuẩn vị trí và tỉ lệ 300 DPI)
+      if (this.stickers && this.stickers.length > 0) {
+        this.stickers.forEach(stk => {
+          ctx.save();
+          const targetX = stk.x * w;
+          const targetY = stk.y * h;
+
+          ctx.translate(targetX, targetY);
+          ctx.rotate((stk.rotation || 0) * Math.PI / 180);
+          ctx.scale(stk.scale || 1, stk.scale || 1);
+
+          if (stk.type === 'emoji') {
+            ctx.font = '72px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.35)';
+            ctx.shadowBlur = 10;
+            ctx.fillText(stk.content, 0, 0);
+          } else if (stk.type === 'badge') {
+            const padX = 22, padY = 10;
+            ctx.font = '800 28px "JetBrains Mono", "Be Vietnam Pro", monospace';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            const metrics = ctx.measureText(stk.content);
+            const badgeW = metrics.width + padX * 2;
+            const badgeH = 48;
+
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+            ctx.shadowBlur = 12;
+            ctx.fillStyle = stk.bg || '#1c1917';
+            ctx.beginPath();
+            ctx.roundRect(-badgeW / 2, -badgeH / 2, badgeW, badgeH, 12);
+            ctx.fill();
+
+            ctx.strokeStyle = stk.color || '#ffffff';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = stk.color || '#ffffff';
+            ctx.fillText(stk.content, 0, 2);
+          } else if (stk.type === 'text') {
+            const fontMap = {
+              'font-serif': '800 42px "Fraunces", "Playfair Display", serif',
+              'font-cursive': 'italic 800 42px "Playfair Display", cursive, serif',
+              'font-sans': '900 40px "Be Vietnam Pro", sans-serif',
+              'font-mono': '700 36px "JetBrains Mono", monospace',
+              'font-pixel': '900 38px "JetBrains Mono", monospace'
+            };
+            ctx.font = fontMap[stk.font] || fontMap['font-sans'];
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            // Viền chữ tương phản (Stroke/Glow)
+            ctx.strokeStyle = (stk.color === '#ffffff' || stk.color === '#fff') ? 'rgba(0, 0, 0, 0.85)' : 'rgba(255, 255, 255, 0.9)';
+            ctx.lineWidth = 6;
+            ctx.strokeText(stk.content, 0, 0);
+
+            // Nội dung chữ
+            ctx.fillStyle = stk.color || '#ffffff';
+            ctx.fillText(stk.content, 0, 0);
+          }
+
+          ctx.restore();
+        });
       }
     }
 
@@ -763,6 +865,7 @@
       }
 
       this.renderFilmStripToCanvas(canvas);
+      this.renderInteractiveStickers();
     }
 
     generateDemoCanvaTemplate(tpl) {
@@ -1432,6 +1535,264 @@
       }
     }
 
+    /* -------------------------------------------------------------
+       STICKER STUDIO & CUSTOM TEXT ENGINE (GÓI 1)
+       ------------------------------------------------------------- */
+    initStickerCatalog() {
+      this.stickerCatalog = {
+        y2k: [
+          { type: 'emoji', content: '🎀' },
+          { type: 'emoji', content: '💖' },
+          { type: 'emoji', content: '✨' },
+          { type: 'emoji', content: '🪞' },
+          { type: 'emoji', content: '🪩' },
+          { type: 'emoji', content: '🦋' },
+          { type: 'emoji', content: '🍬' },
+          { type: 'emoji', content: '🍒' },
+          { type: 'emoji', content: '🧸' },
+          { type: 'emoji', content: '👑' },
+          { type: 'emoji', content: '💄' },
+          { type: 'emoji', content: '🕶️' },
+          { type: 'emoji', content: '💅' },
+          { type: 'emoji', content: '🧚‍♀️' },
+          { type: 'emoji', content: '💌' },
+          { type: 'emoji', content: '🌸' },
+          { type: 'emoji', content: '💫' },
+          { type: 'emoji', content: '🤍' }
+        ],
+        pets: [
+          { type: 'emoji', content: '🐱' },
+          { type: 'emoji', content: '🐶' },
+          { type: 'emoji', content: '🐰' },
+          { type: 'emoji', content: '🐻' },
+          { type: 'emoji', content: '🐼' },
+          { type: 'emoji', content: '🦊' },
+          { type: 'emoji', content: '🐹' },
+          { type: 'emoji', content: '🐥' },
+          { type: 'emoji', content: '🐾' },
+          { type: 'emoji', content: '🦄' },
+          { type: 'emoji', content: '🦦' },
+          { type: 'emoji', content: '🐧' },
+          { type: 'emoji', content: '🐳' },
+          { type: 'emoji', content: '🍀' },
+          { type: 'emoji', content: '🍓' },
+          { type: 'emoji', content: '🍑' },
+          { type: 'emoji', content: '🍩' },
+          { type: 'emoji', content: '🍰' }
+        ],
+        badges: [
+          { type: 'badge', content: 'LIFE4CUTS', bg: '#1c1917', color: '#f59e0b' },
+          { type: 'badge', content: '★ BESTIES ★', bg: '#ec4899', color: '#ffffff' },
+          { type: 'badge', content: 'LOVE STORY', bg: '#ef4444', color: '#ffffff' },
+          { type: 'badge', content: 'MEMORIES', bg: '#3b82f6', color: '#ffffff' },
+          { type: 'badge', content: '35MM FILM', bg: '#d97706', color: '#1c1917' },
+          { type: 'badge', content: 'PHOTO DUMP', bg: '#10b981', color: '#ffffff' },
+          { type: 'badge', content: 'FOREVER YOUNG', bg: '#8b5cf6', color: '#ffffff' },
+          { type: 'badge', content: 'Y2K VIBES', bg: '#f43f5e', color: '#ffffff' },
+          { type: 'badge', content: '✦ 2026 ARCHIVE ✦', bg: '#18181b', color: '#e4e4e7' },
+          { type: 'badge', content: 'CUTE AF', bg: '#fb7185', color: '#ffffff' },
+          { type: 'badge', content: 'SWEETHEART', bg: '#f472b6', color: '#ffffff' },
+          { type: 'badge', content: 'BARCODE 35MM', bg: '#000000', color: '#ffffff' }
+        ],
+        sparkles: [
+          { type: 'emoji', content: '✦' },
+          { type: 'emoji', content: '✧' },
+          { type: 'emoji', content: '★' },
+          { type: 'emoji', content: '☆' },
+          { type: 'emoji', content: '⚡' },
+          { type: 'emoji', content: '🔥' },
+          { type: 'emoji', content: '🎵' },
+          { type: 'emoji', content: '🫧' },
+          { type: 'emoji', content: '🪐' },
+          { type: 'emoji', content: '⛅' },
+          { type: 'emoji', content: '🌈' },
+          { type: 'emoji', content: '💐' },
+          { type: 'emoji', content: '🌷' },
+          { type: 'emoji', content: '🌿' },
+          { type: 'emoji', content: '🎉' },
+          { type: 'emoji', content: '🎈' },
+          { type: 'emoji', content: '☕' },
+          { type: 'emoji', content: '💎' }
+        ]
+      };
+
+      this.renderStickerPalette('y2k');
+    }
+
+    renderStickerPalette(cat) {
+      const grid = document.getElementById('stickerPickerGrid');
+      if (!grid) return;
+      grid.innerHTML = '';
+
+      const items = this.stickerCatalog[cat] || this.stickerCatalog.y2k;
+      items.forEach(item => {
+        const btn = document.createElement('button');
+        btn.className = `sticker-pick-item ${item.type === 'badge' ? 'badge-style' : ''}`;
+        btn.innerHTML = item.content;
+        if (item.type === 'badge') {
+          btn.style.background = item.bg;
+          btn.style.color = item.color;
+        }
+        btn.addEventListener('click', () => this.addSticker(item));
+        grid.appendChild(btn);
+      });
+    }
+
+    addSticker(item) {
+      const jitterX = (Math.random() - 0.5) * 0.2;
+      const jitterY = (Math.random() - 0.5) * 0.2;
+
+      const newSticker = {
+        id: 'stk_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+        type: item.type,
+        content: item.content,
+        bg: item.bg || '#1c1917',
+        color: item.color || '#ffffff',
+        x: Math.max(0.15, Math.min(0.85, 0.5 + jitterX)),
+        y: Math.max(0.15, Math.min(0.85, 0.5 + jitterY)),
+        scale: 1.0,
+        rotation: Math.floor((Math.random() - 0.5) * 20)
+      };
+
+      this.stickers.push(newSticker);
+      this.activeStickerId = newSticker.id;
+      this.updateLiveStripPreview();
+      if (window.audioEffects) window.audioEffects.playBeep(false);
+    }
+
+    addCustomText(text) {
+      if (!text || !text.trim()) return;
+
+      const newTextSticker = {
+        id: 'text_' + Date.now(),
+        type: 'text',
+        content: text.trim(),
+        font: this.selectedTextFont || 'font-serif',
+        color: this.selectedTextColor || '#ffffff',
+        x: 0.5,
+        y: 0.5 + (Math.random() - 0.5) * 0.15,
+        scale: 1.0,
+        rotation: 0
+      };
+
+      this.stickers.push(newTextSticker);
+      this.activeStickerId = newTextSticker.id;
+      this.updateLiveStripPreview();
+      if (window.audioEffects) window.audioEffects.playBeep(false);
+    }
+
+    clearAllStickers() {
+      if (this.stickers.length === 0) return;
+      if (!confirm('Bạn có muốn xóa toàn bộ sticker và chữ trên dải ảnh?')) return;
+      this.stickers = [];
+      this.activeStickerId = null;
+      this.updateLiveStripPreview();
+    }
+
+    renderInteractiveStickers() {
+      const overlay = document.getElementById('stickerInteractiveOverlay');
+      if (!overlay) return;
+      overlay.innerHTML = '';
+
+      const countBadge = document.getElementById('stickerCountBadge');
+      if (countBadge) {
+        countBadge.innerText = `${this.stickers.length} sticker`;
+      }
+
+      this.stickers.forEach(stk => {
+        const itemEl = document.createElement('div');
+        itemEl.className = `sticker-item ${this.activeStickerId === stk.id ? 'active' : ''}`;
+        itemEl.style.left = `${stk.x * 100}%`;
+        itemEl.style.top = `${stk.y * 100}%`;
+        itemEl.style.transform = `translate(-50%, -50%) rotate(${stk.rotation || 0}deg) scale(${stk.scale || 1})`;
+
+        let innerContent = '';
+        if (stk.type === 'emoji') {
+          innerContent = `<div class="sticker-content" style="font-size: 2.2rem; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.35));">${stk.content}</div>`;
+        } else if (stk.type === 'badge') {
+          innerContent = `<div class="sticker-content" style="background: ${stk.bg}; color: ${stk.color}; border: 1.5px solid ${stk.color}; padding: 4px 10px; border-radius: 8px; font-family: var(--font-mono); font-size: 0.72rem; font-weight: 800; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.4);">${stk.content}</div>`;
+        } else if (stk.type === 'text') {
+          innerContent = `<div class="sticker-content ${stk.font}" style="color: ${stk.color}; font-size: 1.1rem; font-weight: 800; white-space: nowrap; text-shadow: 0 2px 8px rgba(0,0,0,0.8), 0 0 2px #000;">${stk.content}</div>`;
+        }
+
+        itemEl.innerHTML = `
+          ${innerContent}
+          <div class="sticker-controls">
+            <button class="st-ctrl-btn btn-rotate" title="Xoay">🔄</button>
+            <button class="st-ctrl-btn btn-delete" title="Xóa">✕</button>
+          </div>
+        `;
+
+        // Sự kiện chọn / active
+        itemEl.addEventListener('pointerdown', (e) => {
+          e.stopPropagation();
+          this.activeStickerId = stk.id;
+          document.querySelectorAll('.sticker-item').forEach(el => el.classList.remove('active'));
+          itemEl.classList.add('active');
+
+          // Xử lý kéo thả (Drag & Drop)
+          const overlayRect = overlay.getBoundingClientRect();
+          const startPointerX = e.clientX;
+          const startPointerY = e.clientY;
+          const startStkX = stk.x;
+          const startStkY = stk.y;
+
+          const onPointerMove = (ev) => {
+            const dx = (ev.clientX - startPointerX) / overlayRect.width;
+            const dy = (ev.clientY - startPointerY) / overlayRect.height;
+            stk.x = Math.max(0.04, Math.min(0.96, startStkX + dx));
+            stk.y = Math.max(0.04, Math.min(0.96, startStkY + dy));
+            itemEl.style.left = `${stk.x * 100}%`;
+            itemEl.style.top = `${stk.y * 100}%`;
+          };
+
+          const onPointerUp = () => {
+            window.removeEventListener('pointermove', onPointerMove);
+            window.removeEventListener('pointerup', onPointerUp);
+            // Render lại canvas để đồng bộ
+            const canvas = document.getElementById('livePreviewCanvas');
+            if (canvas) this.renderFilmStripToCanvas(canvas);
+          };
+
+          window.addEventListener('pointermove', onPointerMove);
+          window.addEventListener('pointerup', onPointerUp);
+        });
+
+        // Nút xoay 🔄
+        const rotBtn = itemEl.querySelector('.btn-rotate');
+        if (rotBtn) {
+          rotBtn.addEventListener('pointerdown', (e) => {
+            e.stopPropagation();
+            stk.rotation = ((stk.rotation || 0) + 20) % 360;
+            itemEl.style.transform = `translate(-50%, -50%) rotate(${stk.rotation}deg) scale(${stk.scale || 1})`;
+            const canvas = document.getElementById('livePreviewCanvas');
+            if (canvas) this.renderFilmStripToCanvas(canvas);
+          });
+        }
+
+        // Nút xóa ✕
+        const delBtn = itemEl.querySelector('.btn-delete');
+        if (delBtn) {
+          delBtn.addEventListener('pointerdown', (e) => {
+            e.stopPropagation();
+            this.stickers = this.stickers.filter(s => s.id !== stk.id);
+            this.activeStickerId = null;
+            this.updateLiveStripPreview();
+          });
+        }
+
+        overlay.appendChild(itemEl);
+      });
+
+      // Bấm ra ngoài overlay để bỏ chọn active
+      overlay.onclick = (e) => {
+        if (e.target === overlay) {
+          this.activeStickerId = null;
+          document.querySelectorAll('.sticker-item').forEach(el => el.classList.remove('active'));
+        }
+      };
+    }
+
     bindEvents() {
       document.getElementById('btnStartSelfbooth').addEventListener('click', () => this.startSession());
       document.getElementById('btnFreeMode').addEventListener('click', () => this.takeFreeShot());
@@ -1505,6 +1866,68 @@
       document.getElementById('sbDateToggle').addEventListener('change', (e) => {
         this.state.showDate = e.target.checked;
         this.updateLiveStripPreview();
+      });
+
+      // Date style chips (Gói 1)
+      document.querySelectorAll('.date-chip').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.date-chip').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          this.state.dateStyle = btn.dataset.dateStyle;
+          this.updateLiveStripPreview();
+          if (window.audioEffects) window.audioEffects.playBeep(false);
+        });
+      });
+
+      // Sticker Studio Category Tabs (Gói 1)
+      document.querySelectorAll('.st-tab').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.st-tab').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          this.currentStickerCat = btn.dataset.stCat;
+          this.renderStickerPalette(this.currentStickerCat);
+          if (window.audioEffects) window.audioEffects.playBeep(false);
+        });
+      });
+
+      // Clear all stickers (Gói 1)
+      const btnClearStickers = document.getElementById('btnClearAllStickers');
+      if (btnClearStickers) {
+        btnClearStickers.addEventListener('click', () => this.clearAllStickers());
+      }
+
+      // Add Custom Text (Gói 1)
+      const textInput = document.getElementById('customTextInput');
+      const addTextBtn = document.getElementById('btnAddCustomTextBtn');
+      const triggerAddText = () => {
+        if (textInput && textInput.value.trim()) {
+          this.addCustomText(textInput.value.trim());
+          textInput.value = '';
+        }
+      };
+
+      if (addTextBtn) addTextBtn.addEventListener('click', triggerAddText);
+      if (textInput) {
+        textInput.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') triggerAddText();
+        });
+      }
+
+      // Custom Text Font Selector (Gói 1)
+      const fontSelect = document.getElementById('customTextFontSelect');
+      if (fontSelect) {
+        fontSelect.addEventListener('change', (e) => {
+          this.selectedTextFont = e.target.value;
+        });
+      }
+
+      // Custom Text Color Dots (Gói 1)
+      document.querySelectorAll('.color-dot').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.color-dot').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          this.selectedTextColor = btn.dataset.color;
+        });
       });
 
       // 8. Frame Preset Vault & Canva Modal Handlers

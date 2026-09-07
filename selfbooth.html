@@ -109,9 +109,12 @@
         <div class="preview-badge-header">
           <span class="preview-tag">🎞️ XEM TRƯỚC DẢI PHIM ANALOG</span>
           <span id="previewLayoutName" class="preview-subtag">📱 Dải Dọc 4 Ô</span>
+          <span class="preview-sticker-hint">✨ Chạm / kéo thả sticker trên ảnh</span>
         </div>
-        <div class="preview-canvas-wrapper">
+        <div class="preview-canvas-wrapper" id="previewCanvasWrapper">
           <canvas id="livePreviewCanvas"></canvas>
+          <!-- Interactive Sticker Overlay -->
+          <div id="stickerInteractiveOverlay" class="sticker-interactive-overlay"></div>
         </div>
       </div>
 
@@ -282,7 +285,7 @@
         </div>
       </section>
 
-      <!-- PANEL 4: CHỌN BỐ CỤC (KHUNG 4 TẤM & KHUNG 8 TẤM) & TRÁNG PHIM -->
+      <!-- PANEL 4: CHỌN BỐ CỤC, STICKER Y2K, CHÈN CHỮ & TRÁNG PHIM -->
       <section id="panelFinish" class="deck-panel">
         <!-- Bố cục Khung 4 Tấm & Khung 8 Tấm -->
         <div class="ctrl-group">
@@ -302,6 +305,75 @@
             <button class="sb-chip" data-layout="dual-strip-8">🎞️ Dải Đôi Song Song (2x4)</button>
             <button class="sb-chip" data-layout="grid-8">🔲 Lưới Dọc 8 Ô (2x4)</button>
             <button class="sb-chip" data-layout="sotay-8">📓 Sổ Tay Kỷ Niệm 8 Ô</button>
+          </div>
+        </div>
+
+        <!-- 🌟 KHO STICKER Y2K & LIFE4CUTS DOODLES (TÍNH NĂNG MỚI) -->
+        <div class="sticker-studio-box">
+          <div class="studio-header">
+            <div class="studio-title">
+              <span>🎀</span> KHO STICKER Y2K & DOODLES
+            </div>
+            <button id="btnClearAllStickers" class="sb-btn-ghost" style="padding: 3px 8px; font-size: 0.7rem; color: #ef4444; border-color: #fca5a5;">
+              ✕ Xóa Tất Cả Sticker
+            </button>
+          </div>
+          
+          <!-- Category Tabs -->
+          <div class="sticker-tabs">
+            <button class="st-tab active" data-st-cat="y2k">🎀 Y2K Cute</button>
+            <button class="st-tab" data-st-cat="pets">🐶 Thú Cưng</button>
+            <button class="st-tab" data-st-cat="badges">📸 Tem Life4Cuts</button>
+            <button class="st-tab" data-st-cat="sparkles">✨ Doodles</button>
+          </div>
+
+          <!-- Sticker Picker Palette -->
+          <div class="sticker-picker-grid" id="stickerPickerGrid">
+            <!-- Rendered by JS -->
+          </div>
+          <div style="font-size: 0.72rem; color: var(--sb-text-dim); margin-top: 6px; display: flex; justify-content: space-between;">
+            <span>💡 <em>Bấm sticker để dán ➔ Kéo thả di chuyển, chạm nút xoay/xóa trên ảnh</em></span>
+            <span id="stickerCountBadge" style="font-weight: 700; color: var(--sb-amber);">0 sticker</span>
+          </div>
+        </div>
+
+        <!-- ✍️ CHÈN CHỮ & CHỮ KÝ NGHỆ THUẬT (TÍNH NĂNG MỚI) -->
+        <div class="custom-text-box">
+          <div class="studio-header">
+            <div class="studio-title">
+              <span>✍️</span> CHÈN CHỮ & CHỮ KÝ CÁ NHÂN
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 6px; margin-bottom: 8px;">
+            <input type="text" id="customTextInput" placeholder="Nhập tên cặp đôi, nickname, lời chúc..." maxlength="30" style="flex: 1; background: #ffffff; border: 1px solid var(--sb-border); color: var(--sb-text); padding: 8px 12px; border-radius: 8px; font-size: 0.82rem; font-weight: 600;">
+            <button id="btnAddCustomTextBtn" class="sb-btn-lime" style="padding: 8px 14px; font-size: 0.78rem; font-weight: 700; border-radius: 8px; white-space: nowrap;">
+              + Dán Lên Ảnh
+            </button>
+          </div>
+
+          <!-- Font and Color Selector -->
+          <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center; justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span style="font-size: 0.72rem; font-weight: 700; color: var(--sb-text-muted);">Font:</span>
+              <select id="customTextFontSelect" style="background: #ffffff; border: 1px solid var(--sb-border); border-radius: 6px; padding: 4px 8px; font-size: 0.74rem; font-weight: 600; color: var(--sb-text);">
+                <option value="font-serif">Fraunces Serif (Vintage)</option>
+                <option value="font-cursive">Playfair Italic (Nghệ thuật)</option>
+                <option value="font-sans">Be Vietnam Pro (Trẻ trung)</option>
+                <option value="font-mono">JetBrains Mono (Máy ảnh)</option>
+                <option value="font-pixel">Y2K Cyber Bold (Gen Z)</option>
+              </select>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <span style="font-size: 0.72rem; font-weight: 700; color: var(--sb-text-muted);">Màu:</span>
+              <button class="color-dot active" data-color="#ffffff" style="background: #ffffff; border: 1px solid #cbd5e1;" title="Trắng"></button>
+              <button class="color-dot" data-color="#1c1917" style="background: #1c1917;" title="Đen"></button>
+              <button class="color-dot" data-color="#f43f5e" style="background: #f43f5e;" title="Hồng"></button>
+              <button class="color-dot" data-color="#d97706" style="background: #d97706;" title="Vàng Hổ Phách"></button>
+              <button class="color-dot" data-color="#10b981" style="background: #10b981;" title="Xanh Bạc Hà"></button>
+              <button class="color-dot" data-color="#8b5cf6" style="background: #8b5cf6;" title="Tím Pastel"></button>
+            </div>
           </div>
         </div>
 
@@ -350,15 +422,25 @@
         </div>
 
         <div class="ctrl-group">
-          <label class="ctrl-label">CHÚ THÍCH <span class="hint">in dưới dải film</span></label>
+          <label class="ctrl-label">CHÚ THÍCH DƯỚI CHÂN ẢNH</label>
           <input type="text" id="sbCaptionInput" value="MÈO BÉO & HỘI BẠN THÂN" maxlength="35" style="background: #ffffff; border: 1px solid var(--sb-border); color: var(--sb-text); padding: 12px 16px; border-radius: 14px; font-weight: 600; font-size: 0.9rem;">
         </div>
 
-        <div style="display: flex; align-items: center; justify-content: space-between; padding: 4px 0;">
-          <label style="font-size: 0.85rem; color: var(--sb-text); font-weight: 600; display: flex; align-items: center; gap: 8px; cursor: pointer;">
-            <input type="checkbox" id="sbDateToggle" checked style="width: 16px; height: 16px; accent-color: var(--sb-amber);">
-            Dấu Ngày Tháng (DD.MM.YYYY)
-          </label>
+        <!-- 🗓️ KIỂU TEM NGÀY THÁNG RETRO -->
+        <div class="ctrl-group">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <label class="ctrl-label" style="margin: 0;">TEM NGÀY THÁNG RETRO</label>
+            <label style="font-size: 0.76rem; color: var(--sb-text); font-weight: 700; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+              <input type="checkbox" id="sbDateToggle" checked style="width: 15px; height: 15px; accent-color: var(--sb-amber);">
+              Hiện tem ngày
+            </label>
+          </div>
+          <div class="chip-row" id="dateStyleChipRow">
+            <button class="sb-chip date-chip active" data-date-style="orange-film">🎞️ 2026.09.07 (Số Cam Máy Phim)</button>
+            <button class="sb-chip date-chip" data-date-style="kpop-star">★ 07.09.2026 • 35MM ★</button>
+            <button class="sb-chip date-chip" data-date-style="polaroid">📷 SEP 07 '26 (Polaroid)</button>
+            <button class="sb-chip date-chip" data-date-style="classic-dot">07/09/2026</button>
+          </div>
         </div>
 
         <div style="display: flex; gap: 12px; margin-top: 10px;">

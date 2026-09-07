@@ -1075,3 +1075,304 @@ body.selfbooth-body {
   font-weight: 600;
 }
 
+/* ==========================================================================
+   STICKER STUDIO & INTERACTIVE POST-CAPTURE LAYER (GÓI 1)
+   ========================================================================== */
+
+/* Preview Viewport & Canvas Overlay */
+.sb-preview-viewport {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 520px;
+  background: #1c1917;
+  border-radius: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 16px;
+}
+
+.preview-badge-header {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  right: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 20;
+  pointer-events: none;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.preview-tag {
+  background: rgba(28, 25, 23, 0.85);
+  backdrop-filter: blur(8px);
+  padding: 6px 14px;
+  border-radius: 9999px;
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #fbf8f3;
+  border: 1px solid rgba(217, 119, 6, 0.4);
+}
+
+.preview-subtag {
+  background: rgba(217, 119, 6, 0.9);
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.preview-sticker-hint {
+  font-size: 0.72rem;
+  color: #fef08a;
+  font-weight: 700;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+  padding: 4px 10px;
+  border-radius: 9999px;
+  border: 1px solid rgba(254, 240, 138, 0.3);
+}
+
+.preview-canvas-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-height: 82vh;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+#livePreviewCanvas {
+  display: block;
+  max-width: 100%;
+  max-height: 78vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 6px;
+}
+
+/* Interactive Overlay */
+.sticker-interactive-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: auto;
+  user-select: none;
+  touch-action: none;
+}
+
+/* Sticker / Text Element in Overlay */
+.sticker-item {
+  position: absolute;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform-origin: center center;
+  transition: box-shadow 150ms ease;
+  z-index: 10;
+}
+
+.sticker-item:active {
+  cursor: grabbing;
+}
+
+.sticker-item.active {
+  outline: 2px dashed #f59e0b;
+  outline-offset: 4px;
+  background: rgba(245, 158, 11, 0.08);
+  border-radius: 6px;
+  z-index: 25;
+}
+
+.sticker-content {
+  pointer-events: none;
+  display: block;
+  line-height: 1;
+}
+
+.sticker-controls {
+  position: absolute;
+  top: -14px;
+  right: -14px;
+  display: none;
+  align-items: center;
+  gap: 4px;
+  z-index: 30;
+}
+
+.sticker-item.active .sticker-controls {
+  display: flex;
+}
+
+.st-ctrl-btn {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #ef4444;
+  color: #fff;
+  border: 1.5px solid #fff;
+  font-size: 0.7rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  transition: transform 120ms ease;
+}
+
+.st-ctrl-btn:hover {
+  transform: scale(1.18);
+}
+
+.st-ctrl-btn.btn-rotate {
+  background: #3b82f6;
+}
+
+/* Sticker Studio Box in Panel Finish */
+.sticker-studio-box, .custom-text-box {
+  background: #ffffff;
+  border: 1px solid var(--sb-border);
+  border-radius: 16px;
+  padding: 14px;
+  margin-top: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+}
+
+.studio-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.studio-title {
+  font-family: var(--font-display);
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: var(--sb-text);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sticker-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.st-tab {
+  background: #fbf8f3;
+  border: 1px solid var(--sb-border);
+  color: var(--sb-text-muted);
+  font-size: 0.74rem;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: 9999px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 150ms ease;
+}
+
+.st-tab:hover {
+  border-color: var(--sb-amber);
+  color: var(--sb-amber);
+}
+
+.st-tab.active {
+  background: #fffbeb;
+  border-color: var(--sb-amber);
+  color: var(--sb-amber);
+  font-weight: 800;
+}
+
+.sticker-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+  max-height: 150px;
+  overflow-y: auto;
+  padding: 6px;
+  background: #fbf8f3;
+  border-radius: 12px;
+  border: 1px solid var(--sb-border);
+}
+
+.sticker-pick-item {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  background: #ffffff;
+  border: 1px solid var(--sb-border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 150ms ease;
+  user-select: none;
+}
+
+.sticker-pick-item:hover {
+  transform: scale(1.15) translateY(-2px);
+  border-color: var(--sb-amber);
+  box-shadow: 0 4px 10px rgba(217, 119, 6, 0.2);
+}
+
+.sticker-pick-item.badge-style {
+  font-size: 0.62rem;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  padding: 4px;
+  text-align: center;
+  background: #1c1917;
+  color: #fff;
+  border-color: #d97706;
+}
+
+/* Color dots */
+.color-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: transform 120ms ease;
+}
+
+.color-dot:hover {
+  transform: scale(1.15);
+}
+
+.color-dot.active {
+  border-color: var(--sb-amber);
+  box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--sb-amber);
+}
+
+/* Font classes for custom text */
+.font-serif { font-family: 'Fraunces', 'Playfair Display', serif; }
+.font-cursive { font-family: 'Playfair Display', cursive, serif; font-style: italic; }
+.font-sans { font-family: 'Be Vietnam Pro', sans-serif; font-weight: 800; }
+.font-mono { font-family: 'JetBrains Mono', monospace; font-weight: 700; }
+.font-pixel { font-family: 'JetBrains Mono', monospace; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; }
+
+
