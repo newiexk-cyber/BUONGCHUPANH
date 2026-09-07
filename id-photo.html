@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chụp Ảnh Thẻ Chuẩn Quy Định - Online Photo Booth Studio</title>
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/id-photo.css">
+  <script src="js/lib/jszip.min.js"></script>
+</head>
+<body>
+  <!-- Shutter Flash Effect -->
+  <div id="screenFlash" class="screen-flash"></div>
+
+  <!-- Header Bar -->
+  <header class="app-header">
+    <a href="index.html" class="brand-logo">
+      <div class="brand-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-amber)" stroke-width="2.2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+        </svg>
+      </div>
+      <div>
+        <div class="brand-title">
+          BUỒNG CHỤP ẢNH <span class="badge-pro">ẢNH THẺ AI</span>
+        </div>
+      </div>
+    </a>
+
+    <div class="header-actions">
+      <div class="tether-badge connected" id="tetherStatus">
+        <span class="dot-indicator"></span>
+        <span id="deviceName">Webcam 1080p AI Active</span>
+      </div>
+      <a href="index.html" class="btn btn-secondary">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+          <polyline points="9 22 9 12 15 12 15 22"></polyline>
+        </svg>
+        Trang Chủ
+      </a>
+    </div>
+  </header>
+
+  <!-- Main Studio Workspace -->
+  <main class="studio-container">
+    <!-- Left Column: Camera Viewport / Live Canvas -->
+    <div class="viewport-card">
+      <div class="viewport-header">
+        <div class="ratio-badge">TỶ LỆ CHUẨN 3:4 (300 DPI)</div>
+        <div style="font-size: 0.8rem; color: var(--text-muted);">Khung phác thảo AI Head & Shoulders</div>
+      </div>
+
+      <div class="viewport-canvas-wrapper">
+        <!-- Live Video -->
+        <video id="cameraVideo" class="mirrored" autoplay playsinline></video>
+
+        <!-- Processed Canvas View -->
+        <canvas id="photoCanvas" style="display: none;"></canvas>
+
+        <!-- Ghost Outline SVG -->
+        <div id="ghostOverlay" class="ghost-overlay aligned">
+          <svg class="ghost-svg" viewBox="0 0 300 400">
+            <!-- Head Oval -->
+            <ellipse cx="150" cy="140" rx="65" ry="85" />
+            <!-- Eye Alignment Line -->
+            <line x1="90" y1="130" x2="210" y2="130" stroke-width="1" />
+            <!-- Nose & Center Axis -->
+            <line x1="150" y1="80" x2="150" y2="200" stroke-width="1" />
+            <!-- Shoulders Contour -->
+            <path d="M 50 380 Q 90 270, 115 240 Q 150 255, 185 240 Q 210 270, 250 380" />
+          </svg>
+        </div>
+
+        <!-- Posture Alert Banner -->
+        <div id="postureBanner" class="posture-banner success">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+          </svg>
+          <span id="postureText">Tư thế chuẩn! Giữ nguyên vị trí để chụp.</span>
+        </div>
+      </div>
+
+      <!-- Live Action Buttons -->
+      <div id="liveControls" style="padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; background: var(--bg-surface-elevated); border-top: 1px solid var(--border-subtle);">
+        <label class="btn btn-secondary" style="margin: 0; cursor: pointer;">
+          <input type="file" id="uploadInput" accept="image/*" style="display: none;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="17 8 12 3 7 8"></polyline>
+            <line x1="12" y1="3" x2="12" y2="15"></line>
+          </svg>
+          Tải ảnh từ máy
+        </label>
+
+        <button id="btnCapture" class="btn btn-blue" style="padding: 10px 28px; font-size: 0.95rem;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <circle cx="12" cy="12" r="10"></circle>
+            <circle cx="12" cy="12" r="4"></circle>
+          </svg>
+          Chụp Ảnh Ngay
+        </button>
+      </div>
+
+      <!-- Post-Capture Edit Controls -->
+      <div id="editControls" style="padding: 16px 20px; display: none; justify-content: space-between; align-items: center; background: var(--bg-surface-elevated); border-top: 1px solid var(--border-subtle);">
+        <button id="btnRetake" class="btn btn-secondary">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 2v6h-6"></path>
+            <path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path>
+            <path d="M3 22v-6h6"></path>
+            <path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path>
+          </svg>
+          Chụp Lại
+        </button>
+
+        <div style="display: flex; gap: 8px;">
+          <button id="btnSavePtb" class="btn btn-secondary">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+              <polyline points="17 21 17 13 7 13 7 21"></polyline>
+              <polyline points="7 3 7 8 15 8"></polyline>
+            </svg>
+            Lưu Gói .ptb
+          </button>
+          <button id="btnDownloadSingle" class="btn btn-blue">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            Tải Ảnh Đơn (3x4)
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Control & Customization Toolbox -->
+    <div class="tools-panel">
+      <!-- Section 1: Phông Nền Hành Chính -->
+      <div class="tool-section">
+        <div class="section-title">
+          <span>1. PHÔNG NỀN HÀNH CHÍNH (AUTO BG)</span>
+          <span style="font-size: 0.7rem; color: var(--accent-blue); font-family: var(--font-mono);">AI SEGMENTER</span>
+        </div>
+        <div class="bg-options-grid">
+          <button class="bg-btn active" data-bg="blue">
+            <span class="color-swatch" style="background: #1E88E5;"></span>
+            <span>Xanh Chuẩn</span>
+          </button>
+          <button class="bg-btn" data-bg="white">
+            <span class="color-swatch" style="background: #FFFFFF;"></span>
+            <span>Trắng Hồ Sơ</span>
+          </button>
+          <button class="bg-btn" data-bg="light-blue">
+            <span class="color-swatch" style="background: #42A5F5;"></span>
+            <span>Xanh Nhạt</span>
+          </button>
+          <button class="bg-btn" data-bg="gray">
+            <span class="color-swatch" style="background: #F1F5F9;"></span>
+            <span>Xám Nhạt</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Section 2: Ghép Trang Phục Công Sở -->
+      <div class="tool-section">
+        <div class="section-title">
+          <span>2. GHÉP ÁO SƠ MI / VEST CÔNG SỞ</span>
+          <span style="font-size: 0.7rem; color: var(--accent-emerald); font-family: var(--font-mono);">SMART ATTIRE</span>
+        </div>
+        <div class="suits-grid">
+          <button class="suit-card active" data-suit="none">
+            <div style="font-weight: 700;">Áo gốc hiện tại</div>
+            <div style="font-size: 0.7rem; color: var(--text-dim);">Không thay đổi trang phục</div>
+          </button>
+          <button class="suit-card" data-suit="men-white-shirt">
+            <div style="font-weight: 700;">Sơ mi trắng Nam</div>
+            <div style="font-size: 0.7rem; color: var(--text-dim);">Kèm cà vạt xanh navy</div>
+          </button>
+          <button class="suit-card" data-suit="men-black-suit">
+            <div style="font-weight: 700;">Vest đen Nam</div>
+            <div style="font-size: 0.7rem; color: var(--text-dim);">Lịch lãm & trang trọng</div>
+          </button>
+          <button class="suit-card" data-suit="women-white-shirt">
+            <div style="font-weight: 700;">Sơ mi trắng Nữ</div>
+            <div style="font-size: 0.7rem; color: var(--text-dim);">Cổ đức công sở chuẩn</div>
+          </button>
+          <button class="suit-card" data-suit="women-navy-blazer">
+            <div style="font-weight: 700;">Vest Navy Nữ</div>
+            <div style="font-size: 0.7rem; color: var(--text-dim);">Thanh lịch công sở</div>
+          </button>
+        </div>
+
+        <!-- Suit Position Fine-Tuning -->
+        <div style="margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border-subtle);">
+          <div class="slider-group">
+            <div class="slider-header">
+              <span>Độ lớn trang phục (Scale)</span>
+            </div>
+            <input type="range" id="suitScaleSlider" min="0.8" max="1.3" step="0.02" value="1.0" class="range-input">
+          </div>
+          <div class="slider-group">
+            <div class="slider-header">
+              <span>Căn chỉnh cao / thấp (Y-Position)</span>
+            </div>
+            <input type="range" id="suitPosYSlider" min="-80" max="80" step="2" value="0" class="range-input">
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 3: Làm Mịn & Sáng Da Tự Nhiên -->
+      <div class="tool-section">
+        <div class="section-title">
+          <span>3. LÀM SÁNG & MỊN DA CƠ BẢN</span>
+          <span style="font-size: 0.7rem; color: var(--accent-amber); font-family: var(--font-mono);">PRESERVE FACIAL EDGES</span>
+        </div>
+        <div class="slider-group">
+          <div class="slider-header">
+            <span>Mịn da tự nhiên</span>
+            <span id="smoothVal" class="font-mono">35%</span>
+          </div>
+          <input type="range" id="smoothSlider" min="0" max="100" value="35" class="range-input">
+        </div>
+        <div class="slider-group">
+          <div class="slider-header">
+            <span>Độ sáng khuôn mặt</span>
+            <span id="brightVal" class="font-mono">+10%</span>
+          </div>
+          <input type="range" id="brightSlider" min="-30" max="40" value="10" class="range-input">
+        </div>
+      </div>
+
+      <!-- Section 4: Dàn Trang Khổ In 10x15cm -->
+      <div class="tool-section" style="background: rgba(59, 130, 246, 0.08); border-color: rgba(59, 130, 246, 0.25);">
+        <div class="section-title">
+          <span style="color: var(--accent-blue);">4. DÀN TRANG IN ẤN TIÊU CHUẨN</span>
+          <span class="font-mono" style="font-size: 0.75rem; color: #93c5fd;">10x15 CM (300 DPI)</span>
+        </div>
+        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">
+          Tự động ghép 4 ảnh kích thước 3x4 cm vào khổ giấy tiêu chuẩn 10x15 cm (4x6 inch) kèm vạch cắt chữ thập chuẩn xưởng in.
+        </p>
+        <button id="btnDownloadPrint" class="btn btn-blue" style="width: 100%;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 6 2 18 2 18 9"></polyline>
+            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+            <rect x="6" y="14" width="12" height="8"></rect>
+          </svg>
+          Xuất Bản In 10x15cm (4 Ảnh 3x4)
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <!-- Core & AI Scripts in Dependency Order -->
+  <script src="js/core/audio-effects.js"></script>
+  <script src="js/core/camera-manager.js"></script>
+  <script src="js/core/ptb-packager.js"></script>
+  <script src="js/ai/posture-checker.js"></script>
+  <script src="js/ai/bg-remover.js"></script>
+  <script src="js/ai/suit-inpaint.js"></script>
+  <script src="js/modules/id-photo-app.js"></script>
+</body>
+</html>

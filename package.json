@@ -1,0 +1,20 @@
+{
+  "name": "online-photobooth-studio",
+  "version": "1.0.0",
+  "description": "Professional 35mm Analog Photobooth Kiosk Studio Engine with Canva Integration",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "photobooth",
+    "kiosk",
+    "canva-api",
+    "webrtc",
+    "indexeddb",
+    "nodejs"
+  ],
+  "author": "Studio Team",
+  "license": "ISC"
+}

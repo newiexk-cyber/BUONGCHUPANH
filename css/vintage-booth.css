@@ -1,0 +1,310 @@
+/* ==========================================================================
+   VINTAGE PHOTO BOOTH - STYLES
+   ========================================================================== */
+
+.booth-container {
+  max-width: 1300px;
+  margin: 0 auto;
+  padding: 24px;
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 28px;
+  min-height: calc(100vh - 80px);
+}
+
+@media (max-width: 992px) {
+  .booth-container {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Retro Booth Viewfinder Card */
+.booth-card {
+  position: relative;
+  background: #ffffff;
+  border: 1px solid rgba(244, 114, 182, 0.25);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  box-shadow: 0 20px 50px rgba(236, 72, 153, 0.12);
+  display: flex;
+  flex-direction: column;
+}
+
+.viewfinder-wrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background: #000;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#boothVideo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+}
+
+/* Viewfinder HUD Overlays */
+.viewfinder-hud {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border: 16px solid rgba(15, 15, 20, 0.7);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 12px;
+}
+
+.hud-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: #ef4444;
+  letter-spacing: 0.05em;
+}
+
+.rec-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ef4444;
+  margin-right: 6px;
+  animation: pulse 1s infinite;
+}
+
+.hud-corners {
+  position: absolute;
+  inset: 24px;
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+  pointer-events: none;
+}
+
+/* Big Countdown Overlay */
+.countdown-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(2px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  z-index: 50;
+}
+
+.countdown-number {
+  font-family: var(--font-display);
+  font-size: 8rem;
+  font-weight: 900;
+  color: #ffffff;
+  text-shadow: 0 0 40px rgba(244, 63, 94, 0.8);
+  animation: scaleIn 0.8s ease-out;
+}
+
+.countdown-caption {
+  font-family: var(--font-mono);
+  font-size: 1.1rem;
+  color: var(--accent-rose);
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  margin-top: -10px;
+}
+
+@keyframes scaleIn {
+  0% { transform: scale(0.3); opacity: 0; }
+  50% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(1); }
+}
+
+/* 4-Shot Progress Thumbnails */
+.shots-progress-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  padding: 16px 20px;
+  background: #181820;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.shot-slot {
+  aspect-ratio: 4 / 3;
+  background: #0d0d12;
+  border: 2px dashed #2e2e3d;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  overflow: hidden;
+  position: relative;
+}
+
+.shot-slot.filled {
+  border-style: solid;
+  border-color: var(--accent-rose);
+}
+
+.shot-slot img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.shot-slot-badge {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  background: rgba(0, 0, 0, 0.7);
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  padding: 1px 6px;
+  border-radius: 4px;
+  color: #fff;
+}
+
+/* Film Strip Preview Canvas Container */
+.strip-preview-wrapper {
+  background: #0d0d12;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  padding: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow-y: auto;
+  max-height: 580px;
+  box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.6);
+}
+
+#stripCanvas {
+  max-width: 100%;
+  height: auto;
+  max-height: 520px;
+  border-radius: 6px;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.8);
+}
+
+/* Tools & Effects Sidebar Panel */
+.tools-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(244, 114, 182, 0.25);
+  border-radius: var(--radius-xl);
+  padding: 22px;
+  box-shadow: 0 15px 40px rgba(236, 72, 153, 0.1);
+  overflow-y: auto;
+  max-height: calc(100vh - 120px);
+}
+
+.tool-section {
+  background: #ffffff;
+  border: 1px solid rgba(244, 114, 182, 0.18);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.02);
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #1e1b4b;
+  margin-bottom: 12px;
+  letter-spacing: 0.03em;
+}
+
+/* Filters Grid */
+.filters-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.filter-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 10px 12px;
+  background: #ffffff;
+  border: 1px solid rgba(244, 114, 182, 0.2);
+  border-radius: var(--radius-md);
+  color: #1e1b4b;
+  font-family: var(--font-body);
+  font-size: 0.76rem;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  text-align: left;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+}
+
+.filter-btn:hover {
+  border-color: var(--accent-pink);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(236, 72, 153, 0.15);
+}
+
+.filter-btn.active {
+  border-color: var(--accent-pink);
+  background: rgba(253, 242, 248, 0.95);
+  box-shadow: 0 4px 18px rgba(236, 72, 153, 0.25);
+}
+
+.filter-preview-orb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Frames Grid */
+.frames-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+}
+
+.frame-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 4px;
+  background: #ffffff;
+  border: 1px solid rgba(244, 114, 182, 0.2);
+  border-radius: var(--radius-md);
+  color: #64748b;
+  font-size: 0.68rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+}
+
+.frame-btn:hover, .frame-btn.active {
+  border-color: var(--accent-pink);
+  color: var(--accent-pink);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(236, 72, 153, 0.2);
+}
+
+.frame-swatch {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+}

@@ -1,0 +1,340 @@
+/* ==========================================================================
+   ONLINE PHOTO BOOTH - NEO-VINTAGE & EDITORIAL RETRO FILM DESIGN SYSTEM
+   Curated for Gen Z Aesthetics: Warm Parchment, 35mm Analog & Editorial Typography
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,600;1,700&family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap');
+
+:root {
+  /* Warm Analog & Film Paper Palette */
+  --bg-vintage-gradient: linear-gradient(135deg, #fdfbf7 0%, #f7f2e9 45%, #efe7d8 100%);
+  --bg-parchment: #f6f0e4;
+  --bg-surface: #ffffff;
+  --bg-surface-elevated: #ffffff;
+  --bg-glass: rgba(253, 251, 247, 0.88);
+  
+  /* Ink & Noir Text Colors */
+  --text-main: #1c1917;       /* Deep Charcoal Espresso */
+  --text-espresso: #292524;
+  --text-muted: #57534e;      /* Warm Slate Muted */
+  --text-dim: #78716c;        /* Analog Grain Dim */
+  --text-inverse: #fbf8f3;
+  
+  /* Vintage Accents */
+  --accent-amber: #d97706;    /* Kodak Gold Amber */
+  --accent-amber-glow: rgba(217, 119, 6, 0.28);
+  --accent-terracotta: #e06d53; /* Retro Terracotta Film */
+  --accent-terracotta-glow: rgba(224, 109, 83, 0.28);
+  --accent-bordeaux: #881337; /* Darkroom Wine Red */
+  --accent-olive: #3f6212;    /* Fuji Forest Olive */
+  --accent-brass: #b45309;    /* Vintage Camera Brass */
+  --accent-noir: #18181b;
+  
+  /* Borders & Shadows */
+  --border-subtle: rgba(41, 37, 36, 0.12);
+  --border-hover: #d97706;
+  --border-glass: rgba(255, 255, 255, 0.95);
+  --border-leather: rgba(120, 53, 15, 0.25);
+  --shadow-warm: 0 10px 30px rgba(41, 37, 36, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04);
+  --shadow-elevated: 0 20px 45px rgba(41, 37, 36, 0.12), 0 4px 12px rgba(0, 0, 0, 0.06);
+
+  /* Fonts */
+  --font-display: 'Fraunces', 'Playfair Display', serif;
+  --font-body: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  
+  /* Radii */
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --radius-full: 9999px;
+  
+  /* Transitions */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-bounce: 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Reset & Global */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--bg-vintage-gradient);
+  color: var(--text-main);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  overflow-x: hidden;
+  line-height: 1.5;
+  position: relative;
+}
+
+/* Subtle Film Grain & Warm Sun Dust Background Effect */
+.sparkle-particles-bg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image: 
+    radial-gradient(circle at 12% 20%, rgba(217, 119, 6, 0.12) 0%, transparent 45%),
+    radial-gradient(circle at 88% 30%, rgba(224, 109, 83, 0.12) 0%, transparent 45%),
+    radial-gradient(circle at 50% 85%, rgba(63, 98, 18, 0.08) 0%, transparent 55%);
+  z-index: 0;
+}
+
+.floating-dot {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(217, 119, 6, 0.35);
+  box-shadow: 0 0 12px rgba(217, 119, 6, 0.25);
+  animation: floatUp 10s infinite ease-in-out;
+}
+
+@keyframes floatUp {
+  0% { transform: translateY(0) scale(0.8); opacity: 0.2; }
+  50% { transform: translateY(-50px) scale(1.1); opacity: 0.6; }
+  100% { transform: translateY(-100px) scale(0.8); opacity: 0.2; }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+::-webkit-scrollbar-track {
+  background: #f7f2e9;
+}
+::-webkit-scrollbar-thumb {
+  background: #d6cbba;
+  border-radius: var(--radius-full);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #b8a892;
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-main);
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+/* Header Bar */
+.app-header {
+  height: 72px;
+  padding: 0 36px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(251, 248, 243, 0.9);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border-subtle);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  text-decoration: none;
+  color: var(--text-main);
+}
+
+.brand-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #292524 0%, #1c1917 100%);
+  border: 1.5px solid var(--accent-amber);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 18px rgba(41, 37, 36, 0.25);
+}
+
+.brand-title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.25rem;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: -0.02em;
+}
+
+.badge-pro {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  background: rgba(217, 119, 6, 0.12);
+  color: var(--accent-amber);
+  border: 1px solid rgba(217, 119, 6, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Tether Badge (Camera Shutter Style) */
+.tether-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: var(--radius-full);
+  background: #ffffff;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-espresso);
+  font-size: 0.8rem;
+  font-weight: 600;
+  box-shadow: var(--shadow-warm);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+}
+
+.tether-badge:hover {
+  border-color: var(--accent-amber);
+  color: var(--accent-amber);
+  transform: translateY(-1px);
+}
+
+.tether-badge.connected {
+  border-color: rgba(63, 98, 18, 0.35);
+  background: #f7fee7;
+  color: #3f6212;
+}
+
+.dot-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #a8a29e;
+}
+
+.tether-badge.connected .dot-indicator {
+  background: #65a30d;
+  box-shadow: 0 0 8px #84cc16;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(0.95); opacity: 0.7; }
+  50% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(0.95); opacity: 0.7; }
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 22px;
+  border-radius: var(--radius-full);
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.88rem;
+  cursor: pointer;
+  border: none;
+  text-decoration: none;
+  transition: all var(--transition-bounce);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #1c1917 0%, #292524 100%);
+  color: #fbf8f3;
+  border: 1px solid var(--accent-amber);
+  box-shadow: 0 8px 24px rgba(28, 25, 23, 0.25);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px) scale(1.02);
+  background: linear-gradient(135deg, #292524 0%, #44403c 100%);
+  box-shadow: 0 12px 30px rgba(217, 119, 6, 0.25);
+  color: #fff;
+}
+
+.btn-secondary {
+  background: #ffffff;
+  color: var(--text-espresso);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-warm);
+}
+
+.btn-secondary:hover {
+  background: #fbf8f3;
+  border-color: var(--accent-amber);
+  color: var(--accent-amber);
+  transform: translateY(-2px);
+}
+
+/* Modal */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(28, 25, 23, 0.65);
+  backdrop-filter: blur(8px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 20px;
+}
+
+.modal-backdrop.active {
+  display: flex;
+}
+
+.modal-dialog {
+  background: #fbf8f3;
+  border: 1.5px solid rgba(217, 119, 6, 0.25);
+  border-radius: var(--radius-xl);
+  max-width: 500px;
+  width: 100%;
+  padding: 30px;
+  box-shadow: 0 25px 60px rgba(28, 25, 23, 0.35);
+  animation: popIn 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes popIn {
+  from { transform: scale(0.92); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* Shutter Flash */
+.screen-flash {
+  position: fixed;
+  inset: 0;
+  background: #ffffff;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 999;
+}
+
+.flash-active {
+  animation: flashTrigger 450ms ease-out;
+}
+
+@keyframes flashTrigger {
+  0% { opacity: 0.95; }
+  100% { opacity: 0; }
+}

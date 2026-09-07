@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Buồng Chụp Ảnh Vintage (4-Cut) - Online Photo Booth</title>
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/vintage-booth.css">
+  <script src="js/lib/jszip.min.js"></script>
+</head>
+<body>
+  <!-- Shutter Flash Effect -->
+  <div id="screenFlash" class="screen-flash"></div>
+
+  <!-- Header Bar -->
+  <header class="app-header">
+    <a href="index.html" class="brand-logo">
+      <div class="brand-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-amber)" stroke-width="2.2">
+          <rect x="3" y="3" width="18" height="18" rx="4" ry="4"></rect>
+          <circle cx="8.5" cy="8.5" r="1.5"></circle>
+          <polyline points="21 15 16 10 5 21"></polyline>
+        </svg>
+      </div>
+      <div>
+        <div class="brand-title">
+          BUỒNG CHỤP ẢNH <span class="badge-pro">VINTAGE 4-CUT</span>
+        </div>
+      </div>
+    </a>
+
+    <div class="header-actions">
+      <!-- Bộ chọn thiết bị Camera / Sony A7 IV -->
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <select id="cameraSourceSelect" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.75rem; border-radius: var(--radius-full); cursor: pointer; max-width: 220px; text-overflow: ellipsis;">
+          <option value="">🎥 Đang quét camera...</option>
+        </select>
+      </div>
+
+      <div class="tether-badge connected" id="tetherStatus">
+        <span class="dot-indicator"></span>
+        <span id="tetherStatusLabel">Sony A7 IV / Cam Ready</span>
+      </div>
+      <a href="index.html" class="btn btn-secondary">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+          <polyline points="9 22 9 12 15 12 15 22"></polyline>
+        </svg>
+        Trang Chủ
+      </a>
+    </div>
+  </header>
+
+  <!-- Main Booth Container -->
+  <main class="booth-container">
+    <!-- Left Column: Viewfinder / Film Strip Preview -->
+    <div class="booth-card">
+      <!-- MÀN HÌNH 1: LIVE VIEWFINDER CHỤP 4 TẤM -->
+      <div id="boothLivePanel">
+        <div class="viewfinder-wrapper">
+          <video id="boothVideo" autoplay playsinline></video>
+
+          <!-- HUD Overlays -->
+          <div class="viewfinder-hud">
+            <div class="hud-top">
+              <div><span class="rec-dot"></span>REC • 24FPS</div>
+              <div>ISO 400 • F2.8</div>
+            </div>
+            <div class="hud-corners"></div>
+            <div id="hudFilmStock" style="font-family: var(--font-mono); font-size: 0.75rem; color: #fbbf24; text-align: right; font-weight: 700;">
+              KODAK PORTRA 400 • ISO 400
+            </div>
+          </div>
+
+          <!-- Countdown Big Overlay -->
+          <div id="countdownOverlay" class="countdown-overlay">
+            <div id="countdownNumber" class="countdown-number">3</div>
+            <div id="countdownCaption" class="countdown-caption">TẤM 1 / 4</div>
+          </div>
+        </div>
+
+        <!-- 4-Shot Progress Slots -->
+        <div class="shots-progress-bar">
+          <div class="shot-slot" id="slot-1">
+            <span style="font-family: var(--font-mono); font-size: 0.75rem;">SHOT 1</span>
+          </div>
+          <div class="shot-slot" id="slot-2">
+            <span style="font-family: var(--font-mono); font-size: 0.75rem;">SHOT 2</span>
+          </div>
+          <div class="shot-slot" id="slot-3">
+            <span style="font-family: var(--font-mono); font-size: 0.75rem;">SHOT 3</span>
+          </div>
+          <div class="shot-slot" id="slot-4">
+            <span style="font-family: var(--font-mono); font-size: 0.75rem;">SHOT 4</span>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div style="padding: 18px 24px; display: flex; justify-content: space-between; align-items: center; background: #111116; gap: 12px;">
+          <label class="btn btn-secondary" style="margin: 0; cursor: pointer; white-space: nowrap;">
+            <input type="file" id="uploadVintageInput" accept="image/*" multiple style="display: none;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+            Tải ảnh từ máy
+          </label>
+
+          <button id="btnStartSequence" class="btn btn-primary" style="padding: 12px 28px; font-size: 0.95rem; flex: 1;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polygon points="10 8 16 12 10 16 10 8"></polygon>
+            </svg>
+            Bắt Đầu Chụp 4 Tấm
+          </button>
+        </div>
+      </div>
+
+      <!-- MÀN HÌNH 2: PREVIEW DẢI ẢNH ĐÃ GHÉP -->
+      <div id="boothEditPanel" style="display: none; padding: 20px;">
+        <div class="strip-preview-wrapper">
+          <canvas id="stripCanvas"></canvas>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px;">
+          <button id="btnRetakeAll" class="btn btn-secondary">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 2v6h-6"></path>
+              <path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path>
+              <path d="M3 22v-6h6"></path>
+              <path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path>
+            </svg>
+            Chụp Lại Từ Đầu
+          </button>
+
+          <div style="display: flex; gap: 8px;">
+            <button id="btnSaveStripPtb" class="btn btn-secondary">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                <polyline points="17 21 17 13 7 13 7 21"></polyline>
+              </svg>
+              Lưu Gói .ptb
+            </button>
+            <button id="btnDownloadStrip" class="btn btn-primary">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              Tải Dải Ảnh HD
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Retro Effects & Frame Customizer Toolbox -->
+    <div class="tools-panel">
+      <!-- Section 1: Film Simulation Rolls (Realtime Live Preview) -->
+      <div class="tool-section">
+        <div class="section-title">
+          <span>1. CUỘN PHIM MÁY ẢNH (REALTIME PREVIEW)</span>
+          <span style="font-size: 0.7rem; color: var(--accent-rose); font-family: var(--font-mono);">FILM ROLLS 2026</span>
+        </div>
+        <p style="font-size: 0.72rem; color: var(--text-dim); margin-bottom: 10px;">
+          * Xem trước màu phim trực tiếp trên màn hình camera trước khi bấm chụp.
+        </p>
+        <div class="filters-grid" style="grid-template-columns: repeat(2, 1fr); gap: 8px;">
+          <button class="filter-btn active" data-filter="kodak-portra" data-film="KODAK PORTRA 400 • ISO 400">
+            <div class="filter-preview-orb" style="background: linear-gradient(135deg, #f59e0b, #ea580c);"></div>
+            <div style="font-weight: 700;">🟡 Kodak Portra 400</div>
+            <span style="font-size: 0.65rem; color: var(--text-dim);">Tông da ấm tự nhiên, mịn</span>
+          </button>
+
+          <button class="filter-btn" data-filter="fuji-superia" data-film="FUJIFILM SUPERIA 400 • ISO 400">
+            <div class="filter-preview-orb" style="background: linear-gradient(135deg, #10b981, #065f46);"></div>
+            <div style="font-weight: 700;">🟢 Fuji Superia 400</div>
+            <span style="font-size: 0.65rem; color: var(--text-dim);">Xanh ngọc mát, trong trẻo</span>
+          </button>
+
+          <button class="filter-btn" data-filter="cinestill-800t" data-film="CINESTILL 800T • ISO 800">
+            <div class="filter-preview-orb" style="background: linear-gradient(135deg, #0284c7, #ef4444);"></div>
+            <div style="font-weight: 700;">🔵 CineStill 800T</div>
+            <span style="font-size: 0.65rem; color: var(--text-dim);">Hollywood xanh & halation đỏ</span>
+          </button>
+
+          <button class="filter-btn" data-filter="kodak-gold" data-film="KODAK GOLD 200 • ISO 200">
+            <div class="filter-preview-orb" style="background: linear-gradient(135deg, #eab308, #d97706);"></div>
+            <div style="font-weight: 700;">🟠 Kodak Gold 200</div>
+            <span style="font-size: 0.65rem; color: var(--text-dim);">Sắc nắng hè vintage 90s</span>
+          </button>
+
+          <button class="filter-btn" data-filter="ilford-hp5" data-film="ILFORD HP5 PLUS 400 • B&W">
+            <div class="filter-preview-orb" style="background: linear-gradient(135deg, #52525b, #09090b);"></div>
+            <div style="font-weight: 700;">⚪ Ilford HP5 400</div>
+            <span style="font-size: 0.65rem; color: var(--text-dim);">Đen trắng cổ điển có chiều sâu</span>
+          </button>
+
+          <button class="filter-btn" data-filter="polaroid-600" data-film="POLAROID 600 • INSTANT">
+            <div class="filter-preview-orb" style="background: linear-gradient(135deg, #ec4899, #8b5cf6);"></div>
+            <div style="font-weight: 700;">🟣 Polaroid 600</div>
+            <span style="font-size: 0.65rem; color: var(--text-dim);">Ảnh lấy liền phai mờ retro</span>
+          </button>
+
+          <button class="filter-btn" data-filter="kodachrome-64" data-film="KODACHROME 64 • VINTAGE">
+            <div class="filter-preview-orb" style="background: linear-gradient(135deg, #dc2626, #b45309);"></div>
+            <div style="font-weight: 700;">🔴 Kodachrome 64</div>
+            <span style="font-size: 0.65rem; color: var(--text-dim);">Đỏ vàng rực rỡ tạp chí 80s</span>
+          </button>
+
+          <button class="filter-btn" data-filter="leica-mono" data-film="LEICA M11 MONOCHROM">
+            <div class="filter-preview-orb" style="background: linear-gradient(135deg, #27272a, #000000);"></div>
+            <div style="font-weight: 700;">🟤 Leica Monochrome</div>
+            <span style="font-size: 0.65rem; color: var(--text-dim);">Đen trắng cao cấp sắc nét</span>
+          </button>
+
+          <button class="filter-btn" data-filter="fuji-velvia" data-film="FUJIFILM VELVIA 50">
+            <div class="filter-preview-orb" style="background: linear-gradient(135deg, #06b6d4, #ec4899);"></div>
+            <div style="font-weight: 700;">🌈 Fuji Velvia 50</div>
+            <span style="font-size: 0.65rem; color: var(--text-dim);">Màu sắc sống động rực rỡ</span>
+          </button>
+
+          <button class="filter-btn" data-filter="normal" data-film="NATURAL STANDARD • 1080P">
+            <div class="filter-preview-orb" style="background: linear-gradient(135deg, #94a3b8, #334155);"></div>
+            <div style="font-weight: 700;">✨ Ảnh Gốc Chuẩn</div>
+            <span style="font-size: 0.65rem; color: var(--text-dim);">Không áp dụng bộ lọc</span>
+          </button>
+        </div>
+
+        <!-- Grain Slider -->
+        <div class="slider-group" style="margin-top: 14px;">
+          <div class="slider-header">
+            <span>Độ nhiễu hạt phim (Film Grain)</span>
+            <span id="grainVal" class="font-mono">35%</span>
+          </div>
+          <input type="range" id="grainSlider" min="0" max="80" value="35" class="range-input">
+        </div>
+      </div>
+
+      <!-- Section 2: Frame Layout, Color & TemplatesBooth / Canva Presets -->
+      <div class="tool-section">
+        <div class="section-title">
+          <span>2. BỐ CỤC & MẪU KHUNG TEMPLATES BOOTH</span>
+          <span style="font-size: 0.7rem; color: var(--accent-amber); font-family: var(--font-mono);">COLLAGE & TEMPLATES</span>
+        </div>
+
+        <!-- Layout Tabs -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px;">
+          <button class="btn btn-secondary layout-tab-btn active" data-layout="strip" style="padding: 8px;">
+            Dải Dọc 4 Ảnh (Strip)
+          </button>
+          <button class="btn btn-secondary layout-tab-btn" data-layout="grid" style="padding: 8px;">
+            Lưới Vuông 2x2 (Grid)
+          </button>
+        </div>
+
+        <!-- Cute Canva & TemplatesBooth Presets -->
+        <div style="margin-bottom: 14px;">
+          <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 6px;">Mẫu Khung Hot Trend (TemplatesBooth & Canva)</label>
+          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;">
+            <button class="cute-preset-btn active" data-preset="none" style="padding: 9px; background: var(--bg-surface-elevated); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); font-size: 0.75rem; color: #fff; cursor: pointer; text-align: left;">
+              🎨 Màu Đơn Giản
+            </button>
+            <button class="cute-preset-btn" data-preset="coquette-ribbon" style="padding: 9px; background: var(--bg-surface-elevated); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); font-size: 0.75rem; color: #f472b6; cursor: pointer; text-align: left;">
+              🎀 Coquette Nơ & Ngọc Trai
+            </button>
+            <button class="cute-preset-btn" data-preset="butter-tulip" style="padding: 9px; background: var(--bg-surface-elevated); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); font-size: 0.75rem; color: #facc15; cursor: pointer; text-align: left;">
+              🧸 Gấu Bơ & Hoa Tulip
+            </button>
+            <button class="cute-preset-btn" data-preset="mochi-cat" style="padding: 9px; background: var(--bg-surface-elevated); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); font-size: 0.75rem; color: #a78bfa; cursor: pointer; text-align: left;">
+              🐾 Mèo Mochi & Dấu Chân
+            </button>
+            <button class="cute-preset-btn" data-preset="y2k-cyber" style="padding: 9px; background: var(--bg-surface-elevated); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); font-size: 0.75rem; color: #fb7185; cursor: pointer; text-align: left;">
+              👾 Y2K Stars & Băng Dính
+            </button>
+            <button class="cute-preset-btn" data-preset="vintage-stamp" style="padding: 9px; background: var(--bg-surface-elevated); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); font-size: 0.75rem; color: #fb923c; cursor: pointer; text-align: left;">
+              📮 Tem Thư Bưu Chính 90s
+            </button>
+            <button class="cute-preset-btn" data-preset="birthday-party" style="padding: 9px; background: var(--bg-surface-elevated); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); font-size: 0.75rem; color: #fbbf24; cursor: pointer; text-align: left;">
+              🎂 Birthday Party Glitz
+            </button>
+            <button class="cute-preset-btn" data-preset="modern-wedding" style="padding: 9px; background: var(--bg-surface-elevated); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); font-size: 0.75rem; color: #10b981; cursor: pointer; text-align: left;">
+              🌿 Minimalist Botanical
+            </button>
+            <button class="cute-preset-btn" data-preset="sakura-spring" style="padding: 9px; background: var(--bg-surface-elevated); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); font-size: 0.75rem; color: #fda4af; cursor: pointer; text-align: left; grid-column: span 2;">
+              🌸 Hoa Anh Đào Rơi (Sakura Vibe)
+            </button>
+          </div>
+        </div>
+
+        <!-- Color Swatches -->
+        <div id="colorSwatchesGroup">
+          <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 6px;">Màu nền khung</label>
+          <div class="frames-grid">
+            <button class="frame-btn active" data-color="#ffffff">
+              <div class="frame-swatch" style="background: #ffffff;"></div>
+              <span>Trắng Kem</span>
+            </button>
+            <button class="frame-btn" data-color="#18181b">
+              <div class="frame-swatch" style="background: #18181b;"></div>
+              <span>Đen Moody</span>
+            </button>
+            <button class="frame-btn" data-color="#fce7f3">
+              <div class="frame-swatch" style="background: #fce7f3;"></div>
+              <span>Pastel Pink</span>
+            </button>
+            <button class="frame-btn" data-color="#d97706">
+              <div class="frame-swatch" style="background: #d97706;"></div>
+              <span>Kraft Vintage</span>
+            </button>
+            <button class="frame-btn" data-color="#1e293b">
+              <div class="frame-swatch" style="background: #1e293b;"></div>
+              <span>Cobalt Blue</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Upload Custom Frame from Canva -->
+        <div style="margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--border-subtle);">
+          <label class="btn btn-secondary" style="width: 100%; cursor: pointer; font-size: 0.8rem; border-color: rgba(244, 63, 94, 0.4); background: rgba(244, 63, 94, 0.08); color: #fb7185;">
+            <input type="file" id="uploadCanvaFrameInput" accept="image/png" style="display: none;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+            Tải Khung PNG Từ Canva (Nền Trong Suốt)
+          </label>
+          <div id="customFrameStatus" style="font-size: 0.7rem; color: #34d399; margin-top: 4px; display: none;"></div>
+        </div>
+      </div>
+
+      <!-- Section 3: Retro Stamp & Custom Text -->
+      <div class="tool-section">
+        <div class="section-title">
+          <span>3. ĐÓNG DẤU CHỮ & TIMESTAMP 90s</span>
+          <span style="font-size: 0.7rem; color: var(--accent-emerald); font-family: var(--font-mono);">SUBTITLE</span>
+        </div>
+        <div style="margin-bottom: 10px;">
+          <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 4px;">Chữ chân dải ảnh</label>
+          <input type="text" id="customTextInput" value="VINTAGE PHOTOBOOTH" style="width: 100%; padding: 10px 14px; background: var(--bg-surface-elevated); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); color: #fff; font-family: var(--font-display); font-weight: 700; outline: none;">
+        </div>
+        <p style="font-size: 0.75rem; color: var(--text-dim);">
+          * Tự động in ngày chụp theo định dạng <code class="font-mono">DD.MM.YYYY</code> phong cách máy ảnh cơ.
+        </p>
+      </div>
+    </div>
+  </main>
+
+  <!-- Core Scripts in Dependency Order -->
+  <script src="js/core/audio-effects.js"></script>
+  <script src="js/core/camera-manager.js"></script>
+  <script src="js/core/ptb-packager.js"></script>
+  <script src="js/modules/vintage-booth-app.js"></script>
+</body>
+</html>

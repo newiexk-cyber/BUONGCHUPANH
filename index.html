@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BUỒNG CHỤP ẢNH — Phòng Chụp Ảnh Tự Động Neo-Vintage 35mm Analog</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,600;1,700&family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/main.css">
+  <script src="js/lib/jszip.min.js"></script>
+  <style>
+    /* -------------------------------------------------------------
+       NEO-VINTAGE EDITORIAL HERO & 35MM SPROCKET FILM STRIPS
+       ------------------------------------------------------------- */
+    .hero-wrapper {
+      min-height: calc(100vh - 72px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 24px 60px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Floating Top Notice Badge (Vintage Archival Stamp) */
+    .notice-bubble {
+      background: #ffffff;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-full);
+      padding: 10px 24px;
+      max-width: 580px;
+      box-shadow: var(--shadow-warm);
+      text-align: center;
+      margin-bottom: 36px;
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      animation: floatSmooth 5s infinite ease-in-out;
+    }
+
+    @keyframes floatSmooth {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-5px); }
+    }
+
+    .notice-pill {
+      background: linear-gradient(135deg, #1c1917 0%, #292524 100%);
+      color: #fbf8f3;
+      border: 1px solid var(--accent-amber);
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: var(--radius-full);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .notice-text {
+      font-size: 0.84rem;
+      color: var(--text-muted);
+      font-weight: 500;
+      line-height: 1.4;
+    }
+
+    /* Main Grid with Left Strip, Center Title/Buttons, Right Strip */
+    .hero-layout-grid {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 48px;
+      width: 100%;
+      max-width: 1160px;
+      margin-bottom: 40px;
+    }
+
+    @media (max-width: 900px) {
+      .hero-layout-grid {
+        flex-direction: column;
+        gap: 30px;
+      }
+      .tilted-strip {
+        display: none;
+      }
+    }
+
+    /* 35mm Analog Film Strips with Sprocket Holes */
+    .tilted-strip {
+      width: 170px;
+      background: #1c1917;
+      border-radius: 16px;
+      padding: 14px 10px;
+      box-shadow: 0 25px 50px rgba(28, 25, 23, 0.25), 0 6px 16px rgba(0, 0, 0, 0.12);
+      border: 2px solid #292524;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      transition: all 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    /* 35mm Film Sprocket Perforations on Sides */
+    .tilted-strip::before, .tilted-strip::after {
+      content: '';
+      position: absolute;
+      top: 14px;
+      bottom: 14px;
+      width: 6px;
+      background-image: radial-gradient(circle, #fbf8f3 40%, transparent 45%);
+      background-size: 6px 18px;
+      opacity: 0.6;
+    }
+    .tilted-strip::before { left: 4px; }
+    .tilted-strip::after { right: 4px; }
+
+    .strip-left {
+      transform: rotate(-6deg);
+      animation: floatLeft 6s infinite ease-in-out;
+    }
+
+    .strip-right {
+      transform: rotate(6deg);
+      animation: floatRight 6.5s infinite ease-in-out;
+    }
+
+    .tilted-strip:hover {
+      transform: scale(1.08) rotate(0deg);
+      box-shadow: 0 30px 70px rgba(217, 119, 6, 0.3);
+      z-index: 10;
+    }
+
+    @keyframes floatLeft {
+      0%, 100% { transform: rotate(-6deg) translateY(0); }
+      50% { transform: rotate(-5deg) translateY(-10px); }
+    }
+
+    @keyframes floatRight {
+      0%, 100% { transform: rotate(6deg) translateY(0); }
+      50% { transform: rotate(7deg) translateY(-10px); }
+    }
+
+    .strip-header-label {
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      font-weight: 700;
+      color: var(--accent-amber);
+      margin-bottom: 8px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .strip-grid-cells {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      width: 100%;
+      padding: 0 4px;
+    }
+
+    .strip-cell {
+      aspect-ratio: 1;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      background: #292524;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #d6cbba;
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    .cell-warm {
+      background: linear-gradient(135deg, #44403c 0%, #292524 100%);
+      color: var(--accent-amber);
+    }
+
+    .cell-olive {
+      background: linear-gradient(135deg, #3f6212 0%, #1c1917 100%);
+      color: #bef264;
+    }
+
+    .strip-footer-script {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: #a8a29e;
+      margin-top: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    /* Center Content (Editorial Title & Brass Shutter Button) */
+    .center-hero-content {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      max-width: 620px;
+    }
+
+    .hero-vintage-sub {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      color: var(--accent-amber);
+      text-transform: uppercase;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .hero-vintage-sub::before, .hero-vintage-sub::after {
+      content: '';
+      width: 24px;
+      height: 1px;
+      background: var(--accent-amber);
+    }
+
+    .hero-big-title {
+      font-family: var(--font-display);
+      font-size: 4.5rem;
+      font-weight: 800;
+      color: var(--text-main);
+      letter-spacing: -0.03em;
+      margin-bottom: 16px;
+      line-height: 1.05;
+      text-transform: uppercase;
+      text-shadow: 0 4px 20px rgba(41, 37, 36, 0.08);
+    }
+
+    .hero-description {
+      font-size: 1.05rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 28px;
+      font-weight: 400;
+    }
+
+    @media (max-width: 600px) {
+      .hero-big-title {
+        font-size: 3rem;
+      }
+      .hero-description {
+        font-size: 0.95rem;
+      }
+    }
+
+    /* Tactile Brass Shutter Button (Leica / Rolleiflex Retro Trigger) */
+    .btn-start-vintage {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      background: linear-gradient(135deg, #1c1917 0%, #292524 60%, #44403c 100%);
+      color: #fbf8f3;
+      font-family: var(--font-body);
+      font-size: 1.2rem;
+      font-weight: 800;
+      padding: 18px 52px;
+      border-radius: var(--radius-full);
+      border: 2px solid var(--accent-amber);
+      box-shadow: 0 14px 38px rgba(28, 25, 23, 0.35), 0 0 0 4px rgba(217, 119, 6, 0.18);
+      cursor: pointer;
+      text-decoration: none;
+      transition: all var(--transition-bounce);
+      letter-spacing: 0.04em;
+    }
+
+    .btn-start-vintage:hover {
+      transform: translateY(-3px) scale(1.05);
+      background: linear-gradient(135deg, #292524 0%, #1c1917 100%);
+      box-shadow: 0 18px 45px rgba(217, 119, 6, 0.4), 0 0 0 6px rgba(217, 119, 6, 0.28);
+      color: #fff;
+    }
+
+    /* Fast Selection Features Pill Group */
+    .features-pill-group {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      margin-top: 32px;
+      flex-wrap: wrap;
+    }
+
+    .feat-card {
+      background: #ffffff;
+      border: 1px solid var(--border-subtle);
+      padding: 10px 18px;
+      border-radius: var(--radius-full);
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-espresso);
+      box-shadow: var(--shadow-warm);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all var(--transition-normal);
+      text-decoration: none;
+    }
+
+    .feat-card:hover {
+      border-color: var(--accent-amber);
+      color: var(--accent-amber);
+      transform: translateY(-2px);
+    }
+
+    .copyright-subtext {
+      font-family: var(--font-mono);
+      font-size: 0.76rem;
+      color: var(--text-dim);
+      margin-top: 36px;
+      letter-spacing: 0.05em;
+    }
+  </style>
+</head>
+<body>
+  <!-- Subtle Film Grain & Ambient Warm Light -->
+  <div class="sparkle-particles-bg">
+    <div class="floating-dot" style="width: 8px; height: 8px; top: 15%; left: 10%; animation-delay: 0s;"></div>
+    <div class="floating-dot" style="width: 12px; height: 12px; top: 40%; left: 88%; animation-delay: 2s;"></div>
+    <div class="floating-dot" style="width: 6px; height: 6px; top: 75%; left: 20%; animation-delay: 4s;"></div>
+    <div class="floating-dot" style="width: 10px; height: 10px; top: 25%; left: 75%; animation-delay: 1.5s;"></div>
+    <div class="floating-dot" style="width: 7px; height: 7px; top: 60%; left: 6%; animation-delay: 3s;"></div>
+  </div>
+
+  <!-- Header Bar -->
+  <header class="app-header">
+    <a href="index.html" class="brand-logo">
+      <div class="brand-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent-amber)" stroke-width="2.2">
+          <rect x="3" y="3" width="18" height="18" rx="4" ry="4"></rect>
+          <circle cx="8.5" cy="8.5" r="1.5"></circle>
+          <polyline points="21 15 16 10 5 21"></polyline>
+        </svg>
+      </div>
+      <div>
+        <div class="brand-title">
+          BUỒNG CHỤP ẢNH <span class="badge-pro">35MM ANALOG</span>
+        </div>
+      </div>
+    </a>
+
+    <div class="header-actions">
+      <!-- Nút mở modal Tethering DSLR -->
+      <button id="btnOpenTether" class="tether-badge">
+        <span class="dot-indicator"></span>
+        <span id="tetherBadgeLabel">Kết nối máy ảnh (DSLR/USB)</span>
+      </button>
+
+      <!-- Nút nạp file .ptb -->
+      <label class="btn btn-secondary" style="margin: 0; cursor: pointer; padding: 8px 16px; font-size: 0.8rem;">
+        <input type="file" id="ptbFileInput" accept=".ptb" style="display: none;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="17 8 12 3 7 8"></polyline>
+          <line x1="12" y1="3" x2="12" y2="15"></line>
+        </svg>
+        Mở File (.ptb)
+      </label>
+    </div>
+  </header>
+
+  <!-- Hero Content Area -->
+  <main class="hero-wrapper">
+    <!-- Top Archival Stamp Notice -->
+    <div class="notice-bubble">
+      <div class="notice-pill">35MM STUDIO ARCHIVE</div>
+      <div class="notice-text">
+        Chụp tự động 8 tấm, màu phim vintage, tải khung Canva tùy ý & xuất PNG 300 DPI, GIF chuyển động!
+      </div>
+    </div>
+
+    <!-- 3D Grid Section: Left 35mm Strip | Center Content | Right 35mm Strip -->
+    <div class="hero-layout-grid">
+      <!-- Left 3D Photo Strip (Kodak Gold 200 Style) -->
+      <div class="tilted-strip strip-left">
+        <div class="strip-header-label">KODAK GOLD 200</div>
+        <div class="strip-grid-cells">
+          <div class="strip-cell cell-warm">🎞️</div>
+          <div class="strip-cell cell-warm">📸</div>
+          <div class="strip-cell cell-warm">🎞️</div>
+          <div class="strip-cell cell-warm">✨</div>
+          <div class="strip-cell cell-warm">🎞️</div>
+          <div class="strip-cell cell-warm">📸</div>
+          <div class="strip-cell cell-warm">🎞️</div>
+          <div class="strip-cell cell-warm">✨</div>
+        </div>
+        <div class="strip-footer-script">EXP 24 • ISO 200</div>
+      </div>
+
+      <!-- Center Title & Shutter Button -->
+      <div class="center-hero-content">
+        <div class="hero-vintage-sub">EST. 2026 • RETRO PHOTO LAB</div>
+        <h1 class="hero-big-title">BUỒNG CHỤP ẢNH</h1>
+        <p class="hero-description">
+          Trải nghiệm buồng chụp ảnh hoài cổ phong cách Hàn Quốc. Tự do tạo dáng, tùy biến khung in từ Canva và lưu giữ trọn vẹn từng khoảnh khắc thanh xuân.
+        </p>
+
+        <!-- Brass Shutter Button -->
+        <a href="selfbooth.html" class="btn-start-vintage">
+          <span>BẮT ĐẦU CHỤP</span>
+          <span>📸</span>
+        </a>
+
+        <!-- Feature Tags -->
+        <div class="features-pill-group">
+          <span class="feat-card">
+            <span>🎞️</span> 14 Bố Cục Khung 4 Ô & 8 Ô
+          </span>
+          <span class="feat-card">
+            <span>🎨</span> Tải Lên Khung Tự Vẽ Canva
+          </span>
+          <span class="feat-card">
+            <span>⚡</span> Ảnh In 300 DPI & GIF HD
+          </span>
+        </div>
+      </div>
+
+      <!-- Right 3D Photo Strip (Fujicolor C200 Style) -->
+      <div class="tilted-strip strip-right">
+        <div class="strip-header-label">FUJICOLOR 400</div>
+        <div class="strip-grid-cells">
+          <div class="strip-cell cell-olive">🌿</div>
+          <div class="strip-cell cell-olive">📷</div>
+          <div class="strip-cell cell-olive">🌿</div>
+          <div class="strip-cell cell-olive">✨</div>
+          <div class="strip-cell cell-olive">🌿</div>
+          <div class="strip-cell cell-olive">📷</div>
+          <div class="strip-cell cell-olive">🌿</div>
+          <div class="strip-cell cell-olive">✨</div>
+        </div>
+        <div class="strip-footer-script">EXP 36 • ISO 400</div>
+      </div>
+    </div>
+
+    <div class="copyright-subtext">
+      © 2026 BUỒNG CHỤP ẢNH • VINTAGE ANALOG STUDIO ARCHIVE
+    </div>
+  </main>
+
+  <!-- Tethering Connection Modal -->
+  <div id="tetherModal" class="modal-backdrop">
+    <div class="modal-dialog">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="font-size: 1.2rem; font-weight: 800; display: flex; align-items: center; gap: 8px; color: var(--text-main);">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent-amber)" stroke-width="2.2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+          Kết Nối Máy Ảnh (DSLR / Mirrorless / USB)
+        </h3>
+        <button id="btnCloseModal" style="background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 1.3rem;">✕</button>
+      </div>
+
+      <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 22px;">
+        Hệ thống hỗ trợ kết nối trực tiếp mọi dòng máy ảnh kỹ thuật số (Sony, Canon, Nikon, Fujifilm, Webcam) qua cổng USB để chụp ảnh chất lượng phòng thu cao nhất!
+      </p>
+
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <a href="selfbooth.html" class="btn btn-primary" style="justify-content: center; padding: 14px;">
+          Vào Buồng Chụp Ngay
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Core Scripts in Dependency Order -->
+  <script src="js/core/camera-manager.js"></script>
+  <script src="js/core/ptb-packager.js"></script>
+  <script>
+    const modal = document.getElementById('tetherModal');
+    const btnOpen = document.getElementById('btnOpenTether');
+    const btnClose = document.getElementById('btnCloseModal');
+
+    if (btnOpen) btnOpen.addEventListener('click', () => modal.classList.add('active'));
+    if (btnClose) btnClose.addEventListener('click', () => modal.classList.remove('active'));
+
+    // Nạp file .ptb
+    const ptbInput = document.getElementById('ptbFileInput');
+    if (ptbInput) {
+      ptbInput.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        try {
+          if (!window.PtbPackager) throw new Error('Engine giải nén chưa sẵn sàng');
+          const projectData = await window.PtbPackager.importProject(file);
+          alert(`Nạp thành công phiên làm việc: ${projectData.manifest.metadata.title}`);
+          if (projectData.manifest.mode === 'vintage-booth') {
+            window.location.href = 'vintage-booth.html';
+          } else {
+            window.location.href = 'id-photo.html';
+          }
+        } catch (err) {
+          alert('Lỗi nạp file .ptb: ' + err.message);
+        }
+      });
+    }
+  </script>
+</body>
+</html>

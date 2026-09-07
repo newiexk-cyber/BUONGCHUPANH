@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BUỒNG CHỤP ẢNH — Phòng Chụp Ảnh Tự Động Neo-Vintage 35mm Analog</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,600;1,700&family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/selfbooth.css">
+  <script src="js/lib/jszip.min.js"></script>
+</head>
+<body class="selfbooth-body">
+  <!-- Subtle Ambient Dust & Light Particles -->
+  <div class="sparkle-particles-bg">
+    <div class="floating-dot" style="width: 8px; height: 8px; top: 15%; left: 10%; animation-delay: 0s;"></div>
+    <div class="floating-dot" style="width: 12px; height: 12px; top: 40%; left: 88%; animation-delay: 2s;"></div>
+    <div class="floating-dot" style="width: 6px; height: 6px; top: 75%; left: 20%; animation-delay: 4s;"></div>
+    <div class="floating-dot" style="width: 10px; height: 10px; top: 25%; left: 75%; animation-delay: 1.5s;"></div>
+    <div class="floating-dot" style="width: 7px; height: 7px; top: 60%; left: 6%; animation-delay: 3s;"></div>
+  </div>
+
+  <!-- Flash screen effect -->
+  <div id="screenFlash" style="position: fixed; inset: 0; background: #fff; opacity: 0; pointer-events: none; z-index: 999;"></div>
+
+  <!-- Header -->
+  <header class="sb-header">
+    <a href="index.html" class="sb-brand">
+      <div class="brand-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--sb-amber)" stroke-width="2.2">
+          <rect x="3" y="3" width="18" height="18" rx="4" ry="4"></rect>
+          <circle cx="8.5" cy="8.5" r="1.5"></circle>
+          <polyline points="21 15 16 10 5 21"></polyline>
+        </svg>
+      </div>
+      <div>
+        BUỒNG CHỤP ẢNH <span class="badge-pro">35MM ANALOG</span>
+      </div>
+    </a>
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <!-- Camera Source Selector -->
+      <select id="cameraSourceSelect" class="sb-btn-ghost" style="padding: 7px 14px; font-size: 0.78rem; border-color: var(--sb-border); max-width: 220px; font-weight: 600;">
+        <option value="">🎥 Đang quét camera...</option>
+      </select>
+
+      <button id="btnHeaderFrameVault" class="sb-btn-ghost" style="padding: 7px 14px; font-size: 0.78rem; font-weight: 700; border-color: var(--sb-amber); color: var(--sb-amber); display: flex; align-items: center; gap: 6px;">
+        <span>🎨</span> Kho Khung (<span id="headerVaultCount">0</span>)
+      </button>
+
+      <span id="stepLabel" style="font-family: var(--font-mono); font-size: 0.76rem; color: var(--sb-amber); font-weight: 800; background: #fef3c7; padding: 6px 14px; border-radius: 9999px; border: 1px solid rgba(217,119,6,0.3);">1. THIẾT LẬP</span>
+      <a href="index.html" class="sb-btn-ghost" style="padding: 7px 14px; font-size: 0.78rem; font-weight: 600;">Trang Chủ</a>
+    </div>
+  </header>
+
+  <!-- Local Server Protocol Tip -->
+  <div id="fileProtocolTip" style="display: none; background: #ffffff; border-bottom: 1px solid var(--sb-border); padding: 10px 20px; text-align: center; font-size: 0.82rem; font-weight: 600; color: var(--sb-text); align-items: center; justify-content: center; gap: 10px; box-shadow: var(--sb-shadow-warm);">
+    <span>💡 Trình duyệt Chrome/Brave/Edge chỉ cho phép mở Camera trên máy chủ nội bộ:</span>
+    <a href="http://localhost:3000/selfbooth.html" class="sb-btn-lime" style="padding: 6px 18px; font-size: 0.78rem; text-decoration: none; border-radius: 9999px;">👉 Mở http://localhost:3000/selfbooth.html</a>
+  </div>
+
+  <!-- Main Studio Workspace -->
+  <main class="sb-studio-container">
+    <!-- Left Column: Stage & Viewfinder -->
+    <div class="sb-stage-card">
+      <div class="sb-stage-viewport" id="sbViewport">
+        <video id="sbVideo" autoplay playsinline muted></video>
+        <canvas id="sbDemoCanvas"></canvas>
+
+        <!-- Camera Status Badge (Analog Viewfinder HUD) -->
+        <div id="cameraStatusBadge" style="position: absolute; top: 14px; left: 14px; background: rgba(28,25,23,0.85); backdrop-filter: blur(8px); padding: 6px 14px; border-radius: 9999px; font-family: var(--font-mono); font-size: 0.74rem; font-weight: 700; color: #fbf8f3; z-index: 30; border: 1px solid rgba(217,119,6,0.4); display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+          <span class="sb-rec-dot"></span>
+          <span id="cameraStatusText">35MM LIVE FEED</span>
+        </div>
+
+        <!-- Viewport Camera Trigger Button -->
+        <button id="btnViewportCameraToggle" type="button" style="position: absolute; top: 14px; right: 14px; background: rgba(28,25,23,0.85); backdrop-filter: blur(8px); border: 1px solid rgba(217,119,6,0.4); border-radius: 9999px; padding: 6px 14px; font-family: var(--font-mono); font-size: 0.74rem; font-weight: 700; color: var(--sb-amber); cursor: pointer; z-index: 30; box-shadow: 0 4px 12px rgba(0,0,0,0.3); display: flex; align-items: center; gap: 6px;">
+          🎥 CHỌN CAMERA
+        </button>
+
+        <!-- Camera Permission / Demo Prompt Overlay -->
+        <div id="camPromptOverlay" style="position: absolute; inset: 0; background: rgba(28,25,23,0.92); backdrop-filter: blur(12px); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 50; padding: 24px; text-align: center;">
+          <button id="btnCloseCamPrompt" style="position: absolute; top: 14px; right: 16px; background: none; border: none; color: #fff; font-size: 1.4rem; cursor: pointer;">✕</button>
+          <div style="font-size: 2.8rem; margin-bottom: 8px;">🎥🔒</div>
+          <div style="font-family: var(--font-display); font-size: 1.25rem; font-weight: 800; color: #fff; margin-bottom: 6px;">
+            TRÌNH DUYỆT ĐANG KHÓA CAMERA
+          </div>
+          <div style="font-size: 0.84rem; color: #d6cbba; max-width: 400px; margin-bottom: 18px; line-height: 1.6;">
+            Vui lòng cấp quyền Camera trên thanh địa chỉ URL ➔ Chọn <strong>"Always allow / Luôn cho phép"</strong> ➔ Tải lại trang (F5).
+          </div>
+          <div style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;">
+            <button id="btnGrantCam" class="sb-btn-lime" style="padding: 10px 22px; font-size: 0.84rem;">
+              🔄 Thử Bật Camera Lại
+            </button>
+            <button id="btnUseDemoMode" class="sb-btn-ghost" style="padding: 10px 22px; font-size: 0.84rem; background: rgba(255,255,255,0.1); color: #fff; border-color: rgba(255,255,255,0.25);">
+              ✨ Dùng Demo Studio Live (Không cần Cam)
+            </button>
+          </div>
+        </div>
+
+        <!-- Countdown HUD -->
+        <div class="sb-countdown-hud" id="sbCountdownHud" style="z-index: 40;">
+          <div class="sb-countdown-num" id="sbCountdownNum">3</div>
+          <div class="sb-countdown-tag" id="sbCountdownTag">TẤM 1 / 8</div>
+        </div>
+      </div>
+
+      <!-- 2. Live Film Strip Preview Stage (For Step 4: Hoàn Thiện & Chọn Bố Cục) -->
+      <div class="sb-preview-viewport" id="sbPreviewViewport" style="display: none;">
+        <div class="preview-badge-header">
+          <span class="preview-tag">🎞️ XEM TRƯỚC DẢI PHIM ANALOG</span>
+          <span id="previewLayoutName" class="preview-subtag">📱 Dải Dọc 4 Ô</span>
+        </div>
+        <div class="preview-canvas-wrapper">
+          <canvas id="livePreviewCanvas"></canvas>
+        </div>
+      </div>
+
+      <!-- Film Rail (Continuous 35mm Roll Thumbnails) -->
+      <div class="sb-rail-container">
+        <div style="font-family: var(--font-mono); font-size: 0.74rem; font-weight: 700; color: var(--sb-text-muted); letter-spacing: 0.05em;">
+          CUỘN PHIM <span id="railCount" style="color: var(--sb-amber); font-weight: 800;">0/8</span>
+        </div>
+        <div class="sb-rail-shots" id="sbRailShots">
+          <!-- Rail slots generated dynamically -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Control Deck Panels -->
+    <div class="sb-deck-card">
+      <!-- PANEL 1: THIẾT LẬP -->
+      <section id="panelSetup" class="deck-panel show">
+        <!-- Session Info Banner (Vintage Archival Roll) -->
+        <div style="background: #fbf8f3; border: 1px solid var(--sb-border); border-radius: 16px; padding: 14px 18px; margin-bottom: 8px;">
+          <div style="font-family: var(--font-mono); font-size: 0.82rem; font-weight: 800; color: var(--sb-amber); display: flex; align-items: center; gap: 8px; letter-spacing: 0.04em;">
+            <span>🎞️</span> PHIÊN CHỤP LIÊN HOÀN 8 KHOẢNH KHẮC
+          </div>
+          <div style="font-size: 0.78rem; color: var(--sb-text-muted); margin-top: 4px; line-height: 1.5;">
+            Hệ thống tự động chụp <strong>8 tấm analog</strong> để bạn tha hồ tạo dáng. Sau khi chụp xong, bạn sẽ thoải mái chọn mẫu <strong>Dải Phim 4 Tấm</strong> hoặc <strong>Khung 8 Tấm</strong>!
+          </div>
+        </div>
+
+        <!-- 1. BỘ LỌC MÀU PHIM & NGHỆ THUẬT (50 BỘ LỌC) -->
+        <div class="ctrl-group">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <label class="ctrl-label" style="margin: 0;">1. BỘ LỌC MÀU PHIM (50 BỘ LỌC CHUYÊN NGHIỆP)</label>
+            <span style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--sb-amber); font-weight: 700;">50 FILTERS</span>
+          </div>
+
+          <!-- Phân nhóm bộ lọc -->
+          <div style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--sb-amber); font-weight: 800; margin-top: 4px;">▶ PHIM ANALOG & RETRO 35MM:</div>
+          <div class="chip-row" id="filterChipRow">
+            <button class="sb-chip active" data-filter="goc">Gốc (Raw)</button>
+            <button class="sb-chip" data-filter="kodak200">🎞️ Kodak Gold 200</button>
+            <button class="sb-chip" data-filter="fuji400">🌿 Fuji Pro 400H</button>
+            <button class="sb-chip" data-filter="cinestill">🎬 CineStill 800T</button>
+            <button class="sb-chip" data-filter="portra160">🌸 Portra 160</button>
+            <button class="sb-chip" data-filter="portra400">🍂 Portra 400</button>
+            <button class="sb-chip" data-filter="polaroid">📷 Polaroid 600</button>
+            <button class="sb-chip" data-filter="ilford">🖤 Ilford HP5 BW</button>
+            <button class="sb-chip" data-filter="trix">♟️ Tri-X 400 Noir</button>
+            <button class="sb-chip" data-filter="ekta">🌊 Ektachrome</button>
+            <button class="sb-chip" data-filter="agfa">📜 Agfa Vista 200</button>
+            <button class="sb-chip" data-filter="lomo">🪐 Lomo 90s</button>
+            <button class="sb-chip" data-filter="phim">🎞️ Phim 35mm</button>
+            <button class="sb-chip" data-filter="hoaico">⌛ Hoài cổ</button>
+            <button class="sb-chip" data-filter="phai">📜 Phai màu</button>
+            <button class="sb-chip" data-filter="nostalgia">📻 Ký ức</button>
+
+            <!-- TONE DA & LÀM ĐẸP CHÂN DUNG -->
+            <div style="width: 100%; font-family: var(--font-mono); font-size: 0.7rem; color: var(--sb-amber); font-weight: 800; margin: 8px 0 2px;">▶ TONE DA & LÀM ĐẸP (PORTRAIT & GLOW):</div>
+            <button class="sb-chip" data-filter="minda">✨ Mịn da</button>
+            <button class="sb-chip" data-filter="honghao">💖 Hồng hào</button>
+            <button class="sb-chip" data-filter="dasu">🥛 Da sứ</button>
+            <button class="sb-chip" data-filter="trongveo">🫧 Trong veo</button>
+            <button class="sb-chip" data-filter="seoul">🫧 Seoul Chill</button>
+            <button class="sb-chip" data-filter="nang">☀️ Nắng mai</button>
+            <button class="sb-chip" data-filter="dao">🍑 Đào mọng</button>
+            <button class="sb-chip" data-filter="caramel">🍮 Caramel</button>
+            <button class="sb-chip" data-filter="mocha">☕ Mocha</button>
+            <button class="sb-chip" data-filter="pastel">🧁 Pastel</button>
+            <button class="sb-chip" data-filter="suong">🌁 Sương mai</button>
+            <button class="sb-chip" data-filter="dreamy">🦄 Mộng mơ</button>
+            <button class="sb-chip" data-filter="mo">🌫️ Mờ ảo Soft</button>
+
+            <!-- MÀU NGHỆ THUẬT & TREND GEN Z -->
+            <div style="width: 100%; font-family: var(--font-mono); font-size: 0.7rem; color: var(--sb-amber); font-weight: 800; margin: 8px 0 2px;">▶ MÀU NGHỆ THUẬT & TREND GEN Z:</div>
+            <button class="sb-chip" data-filter="y2k">🪩 Y2K Cyber</button>
+            <button class="sb-chip" data-filter="tokyo">🗼 Tokyo Blue</button>
+            <button class="sb-chip" data-filter="paris">🥐 Paris Sunset</button>
+            <button class="sb-chip" data-filter="hoanghon">🌄 Hoàng hôn</button>
+            <button class="sb-chip" data-filter="bacha">🍃 Bạc hà</button>
+            <button class="sb-chip" data-filter="matcha">🍵 Matcha</button>
+            <button class="sb-chip" data-filter="oaihuong">🪻 Oải hương</button>
+            <button class="sb-chip" data-filter="keo">🍭 Kẹo ngọt</button>
+            <button class="sb-chip" data-filter="bang">🧊 Băng thanh</button>
+            <button class="sb-chip" data-filter="lanh">❄️ Lạnh giá</button>
+            <button class="sb-chip" data-filter="am">🌅 Ấm áp</button>
+            <button class="sb-chip" data-filter="ruc">🌺 Rực rỡ</button>
+            <button class="sb-chip" data-filter="dam">💥 Tương phản</button>
+            <button class="sb-chip" data-filter="bw">⚪ B&W Classic</button>
+            <button class="sb-chip" data-filter="densau">🌑 Đen sâu</button>
+            <button class="sb-chip" data-filter="dem">🌃 Đêm huyền</button>
+            <button class="sb-chip" data-filter="phimhong">🎀 Phim hồng</button>
+            <button class="sb-chip" data-filter="xammo">🌫️ Xám khói</button>
+            <button class="sb-chip" data-filter="denflash">⚡ Đèn Flash</button>
+            <button class="sb-chip" data-filter="nordic">🌲 Bắc Âu</button>
+            <button class="sb-chip" data-filter="cyberpunk">👾 Cyber Neon</button>
+          </div>
+        </div>
+
+        <!-- 2. ĐẾM NGƯỢC THỜI GIAN TẠO DÁNG -->
+        <div class="ctrl-group" style="margin-top: 6px;">
+          <label class="ctrl-label">2. ĐẾM NGƯỢC <span class="hint">thời gian trước mỗi lần chụp</span></label>
+          <div class="chip-row">
+            <button class="sb-chip timer-chip active" data-timer="3">⏱️ 3 giây</button>
+            <button class="sb-chip timer-chip" data-timer="5">⏱️ 5 giây</button>
+            <button class="sb-chip timer-chip" data-timer="10">⏱️ 10 giây (Tạo dáng kỹ)</button>
+          </div>
+        </div>
+
+        <!-- 3. CHỌN KHUNG ẢNH TRƯỚC KHI CHỤP (TÙY CHỌN) -->
+        <div class="frame-vault-box" style="margin-top: 8px;">
+          <div class="vault-header">
+            <div class="vault-title">
+              <span>🎨</span> 3. KHUNG MẪU ĐÃ LƯU <span class="hint" style="font-weight: 500; font-size: 0.72rem;">(chọn trước khi chụp)</span>
+            </div>
+            <button class="sb-btn-lime btn-trigger-add-frame" style="padding: 4px 10px; font-size: 0.72rem; border-radius: 8px;">
+              + Nạp Thêm Khung
+            </button>
+          </div>
+          <div class="vault-grid" id="frameVaultGridSetup">
+            <!-- Rendered dynamically by JS -->
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+            <div id="activeFrameStatusSetup" style="font-size: 0.76rem; color: #059669; font-weight: 700;">
+              ✓ Đang chọn: <strong id="activeFrameNameSetup">Dải Phim Mặc Định</strong>
+            </div>
+            <button id="btnClearFrameSetup" class="sb-btn-ghost" style="padding: 3px 8px; font-size: 0.7rem; display: none; color: #ef4444; border-color: #fca5a5;">
+              Bỏ Khung
+            </button>
+          </div>
+        </div>
+
+        <!-- 5. BOTTOM ACTION BAR -->
+        <div style="display: flex; gap: 10px; align-items: center; margin-top: 14px; flex-wrap: wrap;">
+          <button id="btnMirrorToggle" class="sb-btn-ghost is-on" style="padding: 11px 16px;">
+            <span class="dot" style="width: 8px; height: 8px; border-radius: 50%; background: var(--sb-amber); display: inline-block;"></span> Lật gương (selfie)
+          </button>
+          <button id="btnFreeMode" class="sb-btn-ghost" style="padding: 11px 16px;">
+            📷 CHỤP TỰ DO
+          </button>
+          <button id="btnStartSelfbooth" class="sb-btn-lime" style="flex: 1;">
+            <span class="sb-rec-dot"></span> BẮT ĐẦU CHỤP 8 TẤM →
+          </button>
+        </div>
+      </section>
+
+      <!-- PANEL 2: ĐANG CHỤP -->
+      <section id="panelShooting" class="deck-panel">
+        <div style="display: flex; align-items: center; gap: 16px; padding: 22px; background: #fbf8f3; border: 1.5px solid var(--sb-border); border-radius: 18px;">
+          <span class="sb-rec-dot" style="width: 16px; height: 16px;"></span>
+          <div>
+            <div style="font-family: var(--font-display); font-weight: 800; color: var(--sb-text); font-size: 1.2rem;">ĐANG CHỤP TỰ ĐỘNG 8 TẤM...</div>
+            <div id="shootingStatusText" style="font-family: var(--font-mono); font-size: 0.82rem; color: var(--sb-amber); font-weight: 700; margin-top: 4px;">Tạo dáng trước camera nào!</div>
+          </div>
+        </div>
+        <button id="btnCancelSession" class="sb-btn-ghost" style="margin-top: 10px;">Hủy phiên chụp</button>
+      </section>
+
+      <!-- PANEL 3: XEM LẠI 8 TẤM & RETAKE -->
+      <section id="panelReview" class="deck-panel">
+        <div class="ctrl-group">
+          <label class="ctrl-label">XEM LẠI 8 TẤM VỪA CHỤP <span class="hint">chạm ô nào chưa ưng để chụp lại riêng ô đó</span></label>
+          <div class="review-grid" id="sbReviewGrid">
+            <!-- 8 Review tiles -->
+          </div>
+        </div>
+        <div style="display: flex; gap: 12px; margin-top: 14px;">
+          <button id="btnRetakeAll" class="sb-btn-ghost" style="flex: 1;">‹ Chụp lại từ đầu</button>
+          <button id="btnProceedFinish" class="sb-btn-lime" style="flex: 1.3;">CHỌN BỐ CỤC KHUNG →</button>
+        </div>
+      </section>
+
+      <!-- PANEL 4: CHỌN BỐ CỤC (KHUNG 4 TẤM & KHUNG 8 TẤM) & TRÁNG PHIM -->
+      <section id="panelFinish" class="deck-panel">
+        <!-- Bố cục Khung 4 Tấm & Khung 8 Tấm -->
+        <div class="ctrl-group">
+          <label class="ctrl-label">CHỌN BỐ CỤC KHUNG ẢNH (4 TẤM / 8 TẤM)</label>
+          <div style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--sb-amber); font-weight: 800; margin-bottom: 4px;">▶ KHUNG 4 TẤM (Lấy 4 tấm đẹp nhất):</div>
+          <div class="chip-row" id="layoutChipRow">
+            <button class="sb-chip active" data-layout="strip-4">📱 Dải Dọc 4 Ô</button>
+            <button class="sb-chip" data-layout="grid-4">🔲 Lưới Vuông 4 Ô (2x2)</button>
+            <button class="sb-chip" data-layout="sole-4">🔲 So Le 4 Ô</button>
+            <button class="sb-chip" data-layout="dantu-4">💬 Dán Tủ 4 Ô</button>
+            <button class="sb-chip" data-layout="vom-4">🏛️ Vòm 4 Ô</button>
+            <button class="sb-chip" data-layout="sotay-4">📓 Sổ Tay 4 Ô</button>
+          </div>
+
+          <div style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--sb-amber); font-weight: 800; margin: 10px 0 4px;">▶ KHUNG 8 TẤM (Dùng trọn bộ 8 tấm):</div>
+          <div class="chip-row">
+            <button class="sb-chip" data-layout="dual-strip-8">🎞️ Dải Đôi Song Song (2x4)</button>
+            <button class="sb-chip" data-layout="grid-8">🔲 Lưới Dọc 8 Ô (2x4)</button>
+            <button class="sb-chip" data-layout="sotay-8">📓 Sổ Tay Kỷ Niệm 8 Ô</button>
+          </div>
+        </div>
+
+        <!-- BỘ SƯU TẬP KHUNG MẪU ĐÃ LƯU (FRAME PRESET VAULT) -->
+        <div class="frame-vault-box">
+          <div class="vault-header">
+            <div class="vault-title">
+              <span>🎨</span> BỘ SƯU TẬP KHUNG MẪU
+            </div>
+            <div style="display: flex; gap: 6px;">
+              <button id="btnOpenAddFrameModal" class="sb-btn-lime" style="padding: 5px 12px; font-size: 0.76rem; border-radius: 8px;">
+                + Thêm Khung / Canva
+              </button>
+              <button id="btnOpenCanvaGuide" class="sb-btn-ghost" style="padding: 5px 10px; font-size: 0.72rem; font-weight: 700; border-color: var(--sb-amber); color: var(--sb-amber);">
+                📐 Cỡ Chuẩn
+              </button>
+            </div>
+          </div>
+
+          <div style="font-size: 0.76rem; color: var(--sb-text-muted); line-height: 1.45; margin-bottom: 10px;">
+            Bấm chọn <strong>1 chạm</strong> để áp khung đã lưu lên dải phim của bạn:
+          </div>
+
+          <!-- Lưới thẻ khung đã lưu -->
+          <div class="vault-grid" id="frameVaultGrid">
+            <!-- Cards generated dynamically from IndexedDB -->
+          </div>
+
+          <div id="activeFrameStatus" style="font-size: 0.76rem; color: #059669; font-weight: 700; margin-top: 10px; display: flex; align-items: center; justify-content: space-between;">
+            <span>✓ Đang áp dụng: <strong id="activeFrameName">Dải Phim Mặc Định</strong></span>
+            <button id="btnClearFrame" class="sb-btn-ghost" style="padding: 2px 8px; font-size: 0.7rem; color: #ef4444; border-color: #fca5a5; display: none;">
+              ✕ Bỏ khung
+            </button>
+          </div>
+        </div>
+
+        <div class="ctrl-group" style="margin-top: 8px;">
+          <label class="ctrl-label">TÔNG MÀU DẢI FILM</label>
+          <div class="chip-row">
+            <button class="sb-chip theme-chip active" data-color="#0c0c0e">🖤 Espresso Noir</button>
+            <button class="sb-chip theme-chip" data-color="#f6f0e4">📜 Parchment</button>
+            <button class="sb-chip theme-chip" data-color="#ffffff">🍦 Ivory Cream</button>
+            <button class="sb-chip theme-chip" data-color="#fef3c7">🌾 Kodak Amber</button>
+            <button class="sb-chip theme-chip" data-color="#f0fdf4">🌿 Forest Olive</button>
+          </div>
+        </div>
+
+        <div class="ctrl-group">
+          <label class="ctrl-label">CHÚ THÍCH <span class="hint">in dưới dải film</span></label>
+          <input type="text" id="sbCaptionInput" value="MÈO BÉO & HỘI BẠN THÂN" maxlength="35" style="background: #ffffff; border: 1px solid var(--sb-border); color: var(--sb-text); padding: 12px 16px; border-radius: 14px; font-weight: 600; font-size: 0.9rem;">
+        </div>
+
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 4px 0;">
+          <label style="font-size: 0.85rem; color: var(--sb-text); font-weight: 600; display: flex; align-items: center; gap: 8px; cursor: pointer;">
+            <input type="checkbox" id="sbDateToggle" checked style="width: 16px; height: 16px; accent-color: var(--sb-amber);">
+            Dấu Ngày Tháng (DD.MM.YYYY)
+          </label>
+        </div>
+
+        <div style="display: flex; gap: 12px; margin-top: 10px;">
+          <button id="btnBackToReview" class="sb-btn-ghost" style="flex: 1;">‹ Xem lại 8 tấm</button>
+          <button id="btnDevelopFilm" class="sb-btn-lime" style="flex: 1.4;">🎞️ TRÁNG PHIM (XUẤT PNG & GIF HD)</button>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- MODAL THÊM KHUNG VÀO BỘ SƯU TẬP (CANVA API & PNG UPLOAD) -->
+  <div class="sticker-modal" id="addFrameModal">
+    <div class="sticker-modal-box" style="max-width: 560px; text-align: left;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <h4 style="font-family: var(--font-display); font-weight: 800; color: var(--sb-text); margin: 0; font-size: 1.18rem; display: flex; align-items: center; gap: 8px;">
+          <span>🎨</span> Thêm Khung Mẫu Vào Bộ Sưu Tập
+        </h4>
+        <button id="btnCloseAddFrameModal" style="background: none; border: none; color: #94a3b8; font-size: 1.3rem; cursor: pointer;">✕</button>
+      </div>
+
+      <!-- Tabs: Canva API vs Tải File PNG -->
+      <div class="modal-tabs">
+        <button class="mtab-btn active" data-tab="tabCanvaApi">🔗 Kéo Trực Tiếp Từ Canva API</button>
+        <button class="mtab-btn" data-tab="tabUploadPng">📁 Tải File PNG Lên</button>
+      </div>
+
+      <!-- TAB 1: CANVA API -->
+      <div class="mtab-content active" id="tabCanvaApi">
+        <div style="font-size: 0.78rem; color: var(--sb-text-muted); line-height: 1.5; margin-bottom: 12px;">
+          Nhập <strong>Canva API Key / Access Token</strong> và <strong>Link thiết kế Canva</strong> để hệ thống tự động xuất ảnh PNG và lưu vĩnh viễn vào bộ sưu tập:
+        </div>
+
+        <div style="margin-bottom: 10px;">
+          <label style="font-size: 0.76rem; font-weight: 700; color: var(--sb-text); display: block; margin-bottom: 4px;">1. Canva Client ID / Access Token:</label>
+          <div style="display: flex; gap: 6px;">
+            <input type="text" id="canvaApiKeyInput" value="OC-AaBH-ZfHBN78" placeholder="Dán Bearer Token hoặc Client ID..." style="flex: 1; background: #ffffff; border: 1px solid var(--sb-border); color: var(--sb-text); padding: 8px 12px; border-radius: 8px; font-size: 0.8rem; font-weight: 700; font-family: var(--font-mono);">
+            <button id="btnSaveCanvaToken" class="sb-btn-ghost" style="padding: 8px 12px; font-size: 0.76rem; font-weight: 700; border-color: var(--sb-amber); color: var(--sb-amber);">
+              💾 Đã Lưu
+            </button>
+          </div>
+          <div style="font-size: 0.7rem; color: #059669; font-weight: 700; margin-top: 3px;">
+            ✓ Đã kết nối Canva App: <code>OC-AaBH-ZfHBN78</code>
+          </div>
+        </div>
+
+        <div style="margin-bottom: 10px;">
+          <label style="font-size: 0.76rem; font-weight: 700; color: var(--sb-text); display: block; margin-bottom: 4px;">2. Link Thiết Kế Canva Hoặc Design ID:</label>
+          <input type="text" id="canvaDesignUrlInput" placeholder="Ví dụ: https://www.canva.com/design/DAG.../edit hoặc DAG..." style="width: 100%; background: #ffffff; border: 1px solid var(--sb-border); color: var(--sb-text); padding: 8px 12px; border-radius: 8px; font-size: 0.8rem;">
+        </div>
+
+        <div style="margin-bottom: 14px;">
+          <label style="font-size: 0.76rem; font-weight: 700; color: var(--sb-text); display: block; margin-bottom: 4px;">3. Đặt Tên Khung:</label>
+          <input type="text" id="canvaFrameNameInput" placeholder="Ví dụ: Khung Sinh Nhật Bé Bắp, Khung Cưới 2026..." style="width: 100%; background: #ffffff; border: 1px solid var(--sb-border); color: var(--sb-text); padding: 8px 12px; border-radius: 8px; font-size: 0.8rem;">
+        </div>
+
+        <div style="display: flex; gap: 8px;">
+          <button id="btnFetchCanvaDesign" class="sb-btn-lime" style="flex: 1; padding: 10px; font-size: 0.82rem;">
+            ⚡ KÉO KHUNG TỪ CANVA & LƯU VÀO KHO
+          </button>
+        </div>
+      </div>
+
+      <!-- TAB 2: UPLOAD PNG (HỖ TRỢ NHIỀU FILE CÙNG LÚC) -->
+      <div class="mtab-content" id="tabUploadPng">
+        <div style="font-size: 0.78rem; color: var(--sb-text-muted); line-height: 1.5; margin-bottom: 12px;">
+          Chọn hoặc <strong>kéo thả cùng lúc 1 hoặc nhiều file PNG</strong> (nền trong suốt) để nạp hàng loạt vào kho:
+        </div>
+
+        <div class="vault-dropzone" id="vaultDropzone">
+          <div style="font-size: 1.8rem; margin-bottom: 4px;">📁</div>
+          <div style="font-size: 0.85rem; font-weight: 800; color: var(--sb-text);">
+            Kéo thả nhiều file PNG vào đây, hoặc <span style="color: var(--sb-amber); text-decoration: underline;">Bấm để chọn file</span>
+          </div>
+          <div style="font-size: 0.72rem; color: var(--sb-text-dim); margin-top: 4px;">
+            (Hỗ trợ chọn cùng lúc nhiều file PNG, WebP)
+          </div>
+          <input type="file" id="vaultPngFileInput" accept="image/png,image/webp" multiple style="position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;">
+        </div>
+
+        <!-- Danh sách file đã chọn -->
+        <div id="vaultFilesPreviewContainer" style="display: none; margin-top: 12px;">
+          <div style="font-size: 0.76rem; font-weight: 700; color: var(--sb-text); display: flex; justify-content: space-between; margin-bottom: 6px;">
+            <span>Danh Sách File Đã Chọn:</span>
+            <span id="vaultFilesCountBadge" style="color: var(--sb-amber); font-weight: 800;">0 file</span>
+          </div>
+          <div class="vault-files-preview" id="vaultFilesList"></div>
+        </div>
+
+        <!-- Tên khung nếu chỉ chọn 1 file -->
+        <div id="singleFileNameGroup" style="margin-top: 12px;">
+          <label style="font-size: 0.76rem; font-weight: 700; color: var(--sb-text); display: block; margin-bottom: 4px;">Đặt Tên Khung Mẫu (Tùy chọn):</label>
+          <input type="text" id="vaultPngNameInput" placeholder="Ví dụ: Khung Vintage Kỷ Yếu... (Để trống sẽ lấy tên file)" style="width: 100%; background: #ffffff; border: 1px solid var(--sb-border); color: var(--sb-text); padding: 8px 12px; border-radius: 8px; font-size: 0.8rem;">
+        </div>
+
+        <div style="display: flex; gap: 8px; margin-top: 14px;">
+          <button id="btnSaveUploadedFrame" class="sb-btn-lime" style="flex: 1; padding: 10px; font-size: 0.82rem;">
+            💾 LƯU CÁC KHUNG ĐÃ CHỌN VÀO KHO
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CANVA GUIDE MODAL -->
+  <div class="sticker-modal" id="canvaGuideModal">
+    <div class="sticker-modal-box" style="max-width: 540px; text-align: left;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+        <h4 style="font-family: var(--font-display); font-weight: 800; color: var(--sb-text); margin: 0; font-size: 1.15rem; display: flex; align-items: center; gap: 8px;">
+          <span>📐</span> Kích Thước Chuẩn & Tải Khung Mẫu Canva
+        </h4>
+        <button id="btnCloseCanvaGuide" style="background: none; border: none; color: #94a3b8; font-size: 1.3rem; cursor: pointer;">✕</button>
+      </div>
+
+      <div style="font-size: 0.82rem; color: var(--sb-text-muted); line-height: 1.5; margin-bottom: 14px;">
+        Khi tạo thiết kế mới trên Canva (hoặc Photoshop), hãy chọn <strong>Cỡ tùy chỉnh (Custom Size)</strong> và tải về dưới dạng <strong>PNG (Tích chọn Nền trong suốt / Transparent background)</strong>:
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 10px; font-size: 0.82rem;">
+        <div style="background: #ffffff; border: 1px solid var(--sb-border); border-radius: 12px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+          <div>
+            <div style="font-weight: 800; color: var(--sb-amber);">1. Phôi Khung Chuẩn 4 Ô Dọc (800 x 2400 px)</div>
+            <div style="color: var(--sb-text); margin-top: 2px;">• 4 ô ảnh trong suốt chuẩn vị trí, viền thước ngắm.</div>
+          </div>
+          <a href="assets/canva-templates/phoi-khung-chuan-4-o-doc.png" download="phoi-khung-chuan-4-o-doc.png" class="sb-btn-lime" style="padding: 6px 14px; font-size: 0.76rem; text-decoration: none;">
+            📥 Tải File PNG (800x2400)
+          </a>
+        </div>
+
+        <div style="background: #ffffff; border: 1px solid var(--sb-border); border-radius: 12px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+          <div>
+            <div style="font-weight: 800; color: var(--sb-terracotta);">2. Phôi Khung Lưới Vuông 4 Ô (1600 x 1600 px)</div>
+            <div style="color: var(--sb-text); margin-top: 2px;">• Chuẩn tỉ lệ vuông Instagram 1:1, 4 ô 680x680px.</div>
+          </div>
+          <a href="assets/canva-templates/phoi-khung-luoi-vuong-4-o.png" download="phoi-khung-luoi-vuong-4-o.png" class="sb-btn-ghost" style="padding: 6px 14px; font-size: 0.76rem; text-decoration: none; font-weight: 700; color: var(--sb-terracotta); border-color: var(--sb-terracotta);">
+            📥 Tải File PNG (1600x1600)
+          </a>
+        </div>
+
+        <div style="background: #ffffff; border: 1px solid var(--sb-border); border-radius: 12px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+          <div>
+            <div style="font-weight: 800; color: #ec4899;">3. Phôi Khung Sinh Nhật Party (800 x 2400 px)</div>
+            <div style="color: var(--sb-text); margin-top: 2px;">• Họa tiết nơ, bóng bay, viền tiệc sinh nhật.</div>
+          </div>
+          <a href="assets/canva-templates/phoi-khung-sinh-nhat-party.png" download="phoi-khung-sinh-nhat-party.png" class="sb-btn-ghost" style="padding: 6px 14px; font-size: 0.76rem; text-decoration: none; font-weight: 700; color: #ec4899; border-color: #ec4899;">
+            📥 Tải File PNG (800x2400)
+          </a>
+        </div>
+
+        <div style="background: #ffffff; border: 1px solid var(--sb-border); border-radius: 12px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+          <div>
+            <div style="font-weight: 800; color: #8b5cf6;">4. Phôi Khung Y2K Cyber Angel (800 x 2400 px)</div>
+            <div style="color: var(--sb-text); margin-top: 2px;">• Họa tiết sao 4 cánh, Cyber Neon, Angel Vibes.</div>
+          </div>
+          <a href="assets/canva-templates/phoi-khung-y2k-cyber-cute.png" download="phoi-khung-y2k-cyber-cute.png" class="sb-btn-ghost" style="padding: 6px 14px; font-size: 0.76rem; text-decoration: none; font-weight: 700; color: #8b5cf6; border-color: #8b5cf6;">
+            📥 Tải File PNG (800x2400)
+          </a>
+        </div>
+
+        <div style="background: #ffffff; border: 1px solid var(--sb-border); border-radius: 12px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+          <div>
+            <div style="font-weight: 800; color: #1c1917;">5. Phôi Cuộn Phim 35mm Analog (800 x 2400 px)</div>
+            <div style="color: var(--sb-text); margin-top: 2px;">• Răng cưa cuộn phim Kodak Gold 35mm cổ điển.</div>
+          </div>
+          <a href="assets/canva-templates/phoi-khung-vintage-film-35mm.png" download="phoi-khung-vintage-film-35mm.png" class="sb-btn-ghost" style="padding: 6px 14px; font-size: 0.76rem; text-decoration: none; font-weight: 700; color: #1c1917; border-color: #1c1917;">
+            📥 Tải File PNG (800x2400)
+          </a>
+        </div>
+      </div>
+
+      <div style="margin-top: 16px; text-align: center;">
+        <button id="btnGotCanvaGuide" class="sb-btn-lime" style="padding: 9px 24px; font-size: 0.84rem; border-radius: 9999px;">
+          Đã Hiểu • Tải Khung Lên Ngay
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DARKROOM LOADING OVERLAY -->
+  <div class="darkroom-modal" id="sbDarkroomModal">
+    <div class="dev-spinner"></div>
+    <div style="font-family: var(--font-display); font-size: 1.3rem; font-weight: 800; color: #ffffff; margin-bottom: 8px; letter-spacing: -0.01em;">
+      ĐANG TRÁNG PHIM & DỰNG GIF CHUYỂN ĐỘNG...
+    </div>
+    <div style="font-family: var(--font-mono); font-size: 0.82rem; color: var(--sb-amber);">
+      35MM CHEMICAL BATH PROCESSING • VUI LÒNG CHỜ 1-2 GIÂY
+    </div>
+  </div>
+
+  <!-- RESULT OVERLAY -->
+  <div class="sb-result-overlay" id="sbResultOverlay">
+    <div class="result-box">
+      <div style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--sb-amber); font-weight: 800; margin-bottom: 6px; letter-spacing: 0.1em; text-transform: uppercase;">
+        ★ 35MM ARCHIVE COMPLETED ★
+      </div>
+      <h2 style="font-family: var(--font-display); font-size: 1.6rem; color: var(--sb-text); font-weight: 800; margin-bottom: 20px;">
+        Thành Phẩm Buồng Chụp Ảnh
+      </h2>
+
+      <!-- Result Tabs -->
+      <div class="result-tabs">
+        <button class="rtab active" data-tab="png">🖼️ Ảnh In PNG (300 DPI)</button>
+        <button class="rtab" data-tab="gif">🎞️ GIF Toàn Bộ Quá Trình (HD Siêu Nét)</button>
+      </div>
+
+      <!-- Preview Stage -->
+      <div class="result-preview-stage">
+        <img id="resPngImg" alt="Dải film PNG 300 DPI" style="display: block;">
+        <img id="resGifImg" alt="GIF Toàn Bộ Quá Trình HD" style="display: none;">
+      </div>
+
+      <!-- Actions -->
+      <div style="display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; justify-content: center; width: 100%;">
+        <button id="btnDownloadActive" class="sb-btn-lime" style="padding: 14px 28px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          TẢI MỤC ĐANG XEM
+        </button>
+        <button id="btnShootNew" class="sb-btn-ghost" style="padding: 14px 22px;">
+          📸 Chụp Cuộn Mới
+        </button>
+      </div>
+
+      <div style="display: flex; gap: 10px;">
+        <button id="dlPngBtn" class="sb-btn-ghost" style="padding: 9px 18px; font-size: 0.8rem; font-weight: 700;">🖼️ Tải PNG 300DPI</button>
+        <button id="dlGifBtn" class="sb-btn-ghost" style="padding: 9px 18px; font-size: 0.8rem; font-weight: 700; border-color: var(--sb-amber); color: var(--sb-amber);">🎞️ Tải GIF Quá Trình HD</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hidden Working Canvases -->
+  <canvas id="exportCanvas" style="display: none;"></canvas>
+
+  <!-- Core Scripts -->
+  <script src="js/core/audio-effects.js"></script>
+  <script src="js/core/camera-manager.js"></script>
+  <script src="js/core/gif-encoder.js"></script>
+  <script src="js/modules/selfbooth-app.js"></script>
+</body>
+</html>
