@@ -7,9 +7,10 @@ const express = require('express');
 const path = require('path');
 const config = require('./config');
 
-// Security & Utility Middlewares
+// Security & Session Middlewares
 const { corsMiddleware, securityHeadersMiddleware } = require('./middlewares/security.middleware');
 const { rateLimitMiddleware } = require('./middlewares/rateLimit.middleware');
+const { sessionMiddleware } = require('./middlewares/session.middleware');
 const { notFoundHandler, globalErrorHandler } = require('./middlewares/error.middleware');
 
 // API Routes
@@ -17,19 +18,33 @@ const apiV1Routes = require('./routes/api.routes');
 
 const app = express();
 
-// 1. Core Security Middlewares
-// Try using helmet if installed, otherwise fallback to securityHeadersMiddleware
+// Trust proxy for rate limiter behind reverse proxies (Nginx / Cloudflare)
+app.set('trust proxy', 1);
+
+// 1. Core Security Middlewares (Helmet with Custom CSP)
 try {
   const helmet = require('helmet');
   app.use(helmet({
-    contentSecurityPolicy: false, // Allows flexible canvas image loading & WebRTC video
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://fonts.googleapis.com"],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
+        imgSrc: ["'self'", "data:", "blob:", "https://api.canva.com", "https://*.canva.com"],
+        connectSrc: ["'self'", "https://api.canva.com"],
+        mediaSrc: ["'self'", "blob:", "mediastream:"],
+        objectSrc: ["'none'"],
+        frameAncestors: ["'self'"]
+      }
+    },
     crossOriginEmbedderPolicy: false
   }));
 } catch (e) {
   app.use(securityHeadersMiddleware);
 }
 
-// 2. CORS and Rate Limiting
+// 2. CORS and Anti-Spam Rate Limiting
 try {
   const cors = require('cors');
   app.use(cors({
@@ -37,7 +52,7 @@ try {
       if (!origin || config.allowedOrigins.includes(origin) || config.allowedOrigins.includes('*') || !config.isProduction) {
         callback(null, true);
       } else {
-        callback(new Error('Bị chặn bởi chính sách CORS bảo mật.'));
+        callback(new Error('Yêu cầu bị chặn bởi chính sách CORS bảo mật.'));
       }
     },
     credentials: true
@@ -48,7 +63,10 @@ try {
 
 app.use(rateLimitMiddleware);
 
-// 3. Request Logging (Morgan in development)
+// 3. User Session Context Middleware
+app.use(sessionMiddleware);
+
+// 4. Request Logging (Morgan in development)
 try {
   const morgan = require('morgan');
   app.use(morgan(config.isProduction ? 'combined' : 'dev'));
@@ -56,11 +74,11 @@ try {
   // Graceful fallback
 }
 
-// 4. Body Parsers (Large payload support for 300 DPI high-res print strips)
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+// 5. Body Parsers (Synchronized 35MB payload limit for high-res 300 DPI strips)
+app.use(express.json({ limit: config.payload.limitString }));
+app.use(express.urlencoded({ extended: true, limit: config.payload.limitString }));
 
-// 5. RESTful API Endpoints
+// 6. RESTful API Endpoints
 app.use('/api/v1', apiV1Routes);
 
 // Legacy backward-compatible route mappings
@@ -78,13 +96,19 @@ app.post('/api/save-photo', (req, res, next) => {
   photoController.savePhoto(req, res, next);
 });
 
-// 6. Host Static Frontend Assets (Web Client UI)
+// 7. Host Static Frontend Assets (Web Client UI)
 app.use(express.static(config.paths.publicDir, {
   maxAge: config.isProduction ? '1d' : 0,
-  etag: true
+  etag: true,
+  // Prevent direct public browsing of storage folder
+  setHeaders: (res, filePath) => {
+    if (filePath.includes('storage') || filePath.includes('saved_photos')) {
+      res.setHeader('Cache-Control', 'no-store, private');
+    }
+  }
 }));
 
-// 7. Not Found & Global Error Handling
+// 8. Not Found & Global Error Handling
 app.use(notFoundHandler);
 app.use(globalErrorHandler);
 

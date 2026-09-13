@@ -1,71 +1,105 @@
 /**
- * PHOTO ARCHIVE SERVICE
- * Handles validation, disk storage, and metadata management for photos and GIFs.
+ * SECURE PHOTO STORAGE SERVICE
+ * Handles tenant-isolated storage, Magic Bytes validation, UUID naming, and safe streaming.
  */
 
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const config = require('../config');
+const { validateMagicBytes, detectFormat } = require('../utils/magicBytes');
 
 class PhotoService {
   /**
-   * Validates and saves Base64 photo/GIF to disk
+   * Resolves and creates the private directory for a given session
    */
-  async savePhoto(base64String, format = 'png', caption = '') {
+  async getSessionDir(sessionId) {
+    const safeSessionId = path.basename(sessionId);
+    const sessionDir = path.join(config.paths.photosDir, safeSessionId);
+
+    if (!fs.existsSync(sessionDir)) {
+      await fs.promises.mkdir(sessionDir, { recursive: true });
+    }
+
+    return sessionDir;
+  }
+
+  /**
+   * Validates Magic Bytes and saves photo to private session storage
+   */
+  async savePhoto(sessionId, base64String, requestedFormat = 'png', caption = '') {
+    if (!sessionId) {
+      throw new Error('Thiếu thông tin phiên làm việc (Session ID).');
+    }
+
     if (!base64String || typeof base64String !== 'string') {
       throw new Error('Dữ liệu ảnh base64 không hợp lệ hoặc bị thiếu.');
     }
 
-    // Sanitize and extract base64 payload
+    // 1. Extract Base64 binary payload
     const matches = base64String.match(/^data:image\/([a-zA-Z0-9-+]+);base64,(.+)$/);
-    let ext = format.toLowerCase();
     let dataBuffer;
 
     if (matches && matches.length === 3) {
-      ext = matches[1] === 'jpeg' ? 'jpg' : matches[1];
       dataBuffer = Buffer.from(matches[2], 'base64');
     } else {
       dataBuffer = Buffer.from(base64String.replace(/^data:image\/\w+;base64,/, ''), 'base64');
     }
 
-    // Validate size (limit max 25MB)
-    if (dataBuffer.length > 25 * 1024 * 1024) {
-      throw new Error('Kích thước ảnh vượt quá giới hạn cho phép (tối đa 25MB).');
+    // 2. Enforce synchronized payload size limit (35MB)
+    if (dataBuffer.length > config.payload.maxBytes) {
+      throw new Error(`Kích thước ảnh vượt quá giới hạn cho phép (tối đa ${config.payload.limitString}).`);
     }
 
-    const timestamp = Date.now();
-    const filename = `photo_strip_${timestamp}.${ext}`;
-    const filePath = path.join(config.paths.storageDir, filename);
+    // 3. Authenticate binary data via Magic Bytes
+    const detectedExt = detectFormat(dataBuffer);
+    if (!detectedExt) {
+      throw new Error('Dữ liệu tải lên không phải định dạng ảnh hợp lệ (Magic bytes verification failed).');
+    }
+
+    const ext = detectedExt;
+    const sessionDir = await this.getSessionDir(sessionId);
+
+    // 4. Generate unique UUID v4 filename (collision-free)
+    const fileUUID = crypto.randomUUID ? crypto.randomUUID() : crypto.randomBytes(16).toString('hex');
+    const filename = `strip_${fileUUID}.${ext}`;
+    const filePath = path.join(sessionDir, filename);
 
     await fs.promises.writeFile(filePath, dataBuffer);
 
     return {
+      fileId: fileUUID,
       filename,
+      sessionId,
       sizeBytes: dataBuffer.length,
       format: ext,
-      caption,
+      caption: caption || '',
       createdAt: new Date().toISOString(),
-      url: `/api/v1/photos/archive/${filename}`
+      downloadUrl: `/api/v1/photos/view/${fileUUID}?sessionId=${sessionId}`
     };
   }
 
   /**
-   * Retrieves list of saved photos from storage
+   * Retrieves photos strictly belonging to the caller's session
    */
-  async listPhotos() {
-    const files = await fs.promises.readdir(config.paths.storageDir);
+  async listPhotosBySession(sessionId) {
+    const sessionDir = await this.getSessionDir(sessionId);
+    const files = await fs.promises.readdir(sessionDir);
     const photos = [];
 
     for (const file of files) {
-      const filePath = path.join(config.paths.storageDir, file);
+      const filePath = path.join(sessionDir, file);
       const stat = await fs.promises.stat(filePath);
 
       if (stat.isFile()) {
+        const fileUUID = file.replace(/^strip_|\.[^.]+$/g, '');
         photos.push({
+          fileId: fileUUID,
           filename: file,
+          sessionId,
           sizeBytes: stat.size,
           createdAt: stat.birthtime || stat.mtime,
-          url: `/api/v1/photos/archive/${file}`
+          downloadUrl: `/api/v1/photos/view/${fileUUID}?sessionId=${sessionId}`
         });
       }
     }
@@ -74,18 +108,23 @@ class PhotoService {
   }
 
   /**
-   * Returns safe path to photo file with directory traversal protection
+   * Safely retrieves photo file path verifying session ownership
    */
-  getPhotoPath(filename) {
-    // Sanitize filename to prevent directory traversal
-    const safeName = path.basename(filename);
-    const fullPath = path.join(config.paths.storageDir, safeName);
+  async getPhotoPathBySession(sessionId, fileUUID) {
+    if (!sessionId || !fileUUID) return null;
 
-    if (!fs.existsSync(fullPath)) {
-      return null;
-    }
+    const safeSessionId = path.basename(sessionId);
+    const safeUUID = path.basename(fileUUID);
+    const sessionDir = path.join(config.paths.photosDir, safeSessionId);
 
-    return fullPath;
+    if (!fs.existsSync(sessionDir)) return null;
+
+    const files = await fs.promises.readdir(sessionDir);
+    const targetFile = files.find(f => f.includes(safeUUID));
+
+    if (!targetFile) return null;
+
+    return path.join(sessionDir, targetFile);
   }
 }
 

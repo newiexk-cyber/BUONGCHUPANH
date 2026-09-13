@@ -8,7 +8,7 @@ const canvaService = require('../services/canva.service');
 class CanvaController {
   async exportDesign(req, res, next) {
     try {
-      const { designId, token } = req.body;
+      const { designId } = req.body;
 
       if (!designId) {
         return res.status(400).json({
@@ -17,7 +17,7 @@ class CanvaController {
         });
       }
 
-      const result = await canvaService.exportDesign(designId, token);
+      const result = await canvaService.exportDesign(designId);
       return res.status(200).json(result);
     } catch (err) {
       next(err);

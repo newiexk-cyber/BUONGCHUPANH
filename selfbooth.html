@@ -467,37 +467,27 @@
         <button class="mtab-btn" data-tab="tabUploadPng">📁 Tải File PNG Lên</button>
       </div>
 
-      <!-- TAB 1: CANVA API -->
+      <!-- TAB 1: CANVA API (BẢO MẬT BACKEND PROXY) -->
       <div class="mtab-content active" id="tabCanvaApi">
         <div style="font-size: 0.78rem; color: var(--sb-text-muted); line-height: 1.5; margin-bottom: 12px;">
-          Nhập <strong>Canva API Key / Access Token</strong> và <strong>Link thiết kế Canva</strong> để hệ thống tự động xuất ảnh PNG và lưu vĩnh viễn vào bộ sưu tập:
+          Dán <strong>Link thiết kế Canva</strong> (hoặc Design ID). Hệ thống Backend sẽ tự động kết nối qua Canva Connect API bảo mật và đồng bộ khung mẫu về kho:
         </div>
 
-        <div style="margin-bottom: 10px;">
-          <label style="font-size: 0.76rem; font-weight: 700; color: var(--sb-text); display: block; margin-bottom: 4px;">1. Canva Client ID / Access Token:</label>
-          <div style="display: flex; gap: 6px;">
-            <input type="text" id="canvaApiKeyInput" value="OC-AaBH-ZfHBN78" placeholder="Dán Bearer Token hoặc Client ID..." style="flex: 1; background: #ffffff; border: 1px solid var(--sb-border); color: var(--sb-text); padding: 8px 12px; border-radius: 8px; font-size: 0.8rem; font-weight: 700; font-family: var(--font-mono);">
-            <button id="btnSaveCanvaToken" class="sb-btn-ghost" style="padding: 8px 12px; font-size: 0.76rem; font-weight: 700; border-color: var(--sb-amber); color: var(--sb-amber);">
-              💾 Đã Lưu
-            </button>
+        <div style="margin-bottom: 12px;">
+          <label style="font-size: 0.76rem; font-weight: 700; color: var(--sb-text); display: block; margin-bottom: 4px;">1. Link Thiết Kế Canva Hoặc Design ID:</label>
+          <input type="text" id="canvaDesignUrlInput" placeholder="Ví dụ: https://www.canva.com/design/DAG.../edit hoặc DAG..." style="width: 100%; background: #ffffff; border: 1px solid var(--sb-border); color: var(--sb-text); padding: 9px 12px; border-radius: 8px; font-size: 0.82rem;">
+          <div style="font-size: 0.7rem; color: #059669; font-weight: 700; margin-top: 4px;">
+            🔒 Kết nối an toàn qua Backend API Server (Token được bảo vệ ở máy chủ)
           </div>
-          <div style="font-size: 0.7rem; color: #059669; font-weight: 700; margin-top: 3px;">
-            ✓ Đã kết nối Canva App: <code>OC-AaBH-ZfHBN78</code>
-          </div>
-        </div>
-
-        <div style="margin-bottom: 10px;">
-          <label style="font-size: 0.76rem; font-weight: 700; color: var(--sb-text); display: block; margin-bottom: 4px;">2. Link Thiết Kế Canva Hoặc Design ID:</label>
-          <input type="text" id="canvaDesignUrlInput" placeholder="Ví dụ: https://www.canva.com/design/DAG.../edit hoặc DAG..." style="width: 100%; background: #ffffff; border: 1px solid var(--sb-border); color: var(--sb-text); padding: 8px 12px; border-radius: 8px; font-size: 0.8rem;">
         </div>
 
         <div style="margin-bottom: 14px;">
-          <label style="font-size: 0.76rem; font-weight: 700; color: var(--sb-text); display: block; margin-bottom: 4px;">3. Đặt Tên Khung:</label>
-          <input type="text" id="canvaFrameNameInput" placeholder="Ví dụ: Khung Sinh Nhật Bé Bắp, Khung Cưới 2026..." style="width: 100%; background: #ffffff; border: 1px solid var(--sb-border); color: var(--sb-text); padding: 8px 12px; border-radius: 8px; font-size: 0.8rem;">
+          <label style="font-size: 0.76rem; font-weight: 700; color: var(--sb-text); display: block; margin-bottom: 4px;">2. Đặt Tên Khung:</label>
+          <input type="text" id="canvaFrameNameInput" placeholder="Ví dụ: Khung Sinh Nhật Bé Bắp, Khung Cưới 2026..." style="width: 100%; background: #ffffff; border: 1px solid var(--sb-border); color: var(--sb-text); padding: 9px 12px; border-radius: 8px; font-size: 0.82rem;">
         </div>
 
         <div style="display: flex; gap: 8px;">
-          <button id="btnFetchCanvaDesign" class="sb-btn-lime" style="flex: 1; padding: 10px; font-size: 0.82rem;">
+          <button id="btnFetchCanvaDesign" class="sb-btn-lime" style="flex: 1; padding: 11px; font-size: 0.84rem;">
             ⚡ KÉO KHUNG TỪ CANVA & LƯU VÀO KHO
           </button>
         </div>
@@ -672,7 +662,13 @@
   <!-- Hidden Working Canvases -->
   <canvas id="exportCanvas" style="display: none;"></canvas>
 
-  <!-- Core Scripts -->
+  <!-- Core & Modular Scripts -->
+  <script src="js/utils/sanitizer.js"></script>
+  <script src="js/state/session-store.js"></script>
+  <script src="js/engine/filter-engine.js"></script>
+  <script src="js/engine/frame-renderer.js"></script>
+  <script src="js/modules/sticker-studio.js"></script>
+  <script src="js/modules/frame-vault.js"></script>
   <script src="js/core/audio-effects.js"></script>
   <script src="js/core/camera-manager.js"></script>
   <script src="js/core/gif-encoder.js"></script>

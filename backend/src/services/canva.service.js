@@ -9,15 +9,15 @@ class CanvaService {
   /**
    * Proxies design export job to Canva Connect API
    */
-  async exportDesign(designId, tokenOverride = null) {
-    const token = tokenOverride || config.canva.accessToken;
+  async exportDesign(designId) {
+    const token = config.canva.accessToken;
 
     if (!designId) {
       throw new Error('Thiếu Design ID thiết kế Canva.');
     }
 
     if (!token) {
-      throw new Error('Chưa cấu hình Canva Access Token trên máy chủ.');
+      throw new Error('Chưa cấu hình Canva Access Token trên máy chủ (CANVA_ACCESS_TOKEN).');
     }
 
     // Clean design ID if URL was provided
