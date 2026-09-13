@@ -104,6 +104,13 @@
           <div class="sb-countdown-num" id="sbCountdownNum">3</div>
           <div class="sb-countdown-tag" id="sbCountdownTag">TẤM 1 / 8</div>
         </div>
+
+        <!-- Telemetry HUD -->
+        <div class="viewfinder-telemetry">
+          <span>RAW • 35MM</span>
+          <span>ISO 400 • F/2.8 • 1/125S</span>
+          <span>4K • 300 DPI</span>
+        </div>
       </div>
 
       <!-- 2. Live Film Strip Preview Stage (For Step 4: Hoàn Thiện & Chọn Bố Cục) -->
@@ -122,8 +129,9 @@
 
       <!-- Film Rail (Continuous 35mm Roll Thumbnails) -->
       <div class="sb-rail-container">
-        <div style="font-family: var(--font-mono); font-size: 0.74rem; font-weight: 700; color: var(--sb-text-muted); letter-spacing: 0.05em;">
-          CUỘN PHIM <span id="railCount" style="color: var(--sb-amber); font-weight: 800;">0/8</span>
+        <div style="font-family: var(--font-mono); font-size: 0.74rem; font-weight: 700; color: var(--sb-text-muted); letter-spacing: 0.05em; display: flex; justify-content: space-between;">
+          <span>CUỘN PHIM 35MM</span>
+          <span id="railCount" style="color: var(--sb-amber); font-weight: 800;">0/8</span>
         </div>
         <div class="sb-rail-shots" id="sbRailShots">
           <!-- Rail slots generated dynamically -->
@@ -135,13 +143,14 @@
     <div class="sb-deck-card">
       <!-- PANEL 1: THIẾT LẬP -->
       <section id="panelSetup" class="deck-panel show">
-        <!-- Session Info Banner (Vintage Archival Roll) -->
-        <div style="background: #fbf8f3; border: 1px solid var(--sb-border); border-radius: 16px; padding: 14px 18px; margin-bottom: 8px;">
-          <div style="font-family: var(--font-mono); font-size: 0.82rem; font-weight: 800; color: var(--sb-amber); display: flex; align-items: center; gap: 8px; letter-spacing: 0.04em;">
-            <span>🎞️</span> PHIÊN CHỤP LIÊN HOÀN 8 KHOẢNH KHẮC
+        <!-- Session Info Banner (Titanium Studio Roll) -->
+        <div style="background: #18181b; border: 1px solid var(--sb-border); border-radius: 14px; padding: 14px 16px; margin-bottom: 6px;">
+          <div style="font-family: var(--font-mono); font-size: 0.78rem; font-weight: 800; color: var(--sb-amber); display: flex; align-items: center; gap: 8px; letter-spacing: 0.06em; text-transform: uppercase;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            <span>STUDIO KIOSK • 8-SHOT ARCHIVAL ROLL</span>
           </div>
-          <div style="font-size: 0.78rem; color: var(--sb-text-muted); margin-top: 4px; line-height: 1.5;">
-            Hệ thống tự động chụp <strong>8 tấm analog</strong> để bạn tha hồ tạo dáng. Sau khi chụp xong, bạn sẽ thoải mái chọn mẫu <strong>Dải Phim 4 Tấm</strong> hoặc <strong>Khung 8 Tấm</strong>!
+          <div style="font-size: 0.76rem; color: var(--sb-text-muted); margin-top: 4px; line-height: 1.4;">
+            Chụp liên hoàn 8 tấm chất lượng cao. Sau khi chụp xong, bạn sẽ thoải mái chọn dải phim 4 ô hoặc khung 8 ô!
           </div>
         </div>
 
@@ -619,6 +628,23 @@
     <div style="font-family: var(--font-mono); font-size: 0.82rem; color: var(--sb-amber);">
       35MM CHEMICAL BATH PROCESSING • VUI LÒNG CHỜ 1-2 GIÂY
     </div>
+  </div>
+
+  <!-- STICKY BOTTOM CAPTURE BAR (ALWAYS VISIBLE ON MOBILE & KIOSK) -->
+  <div class="sb-mobile-sticky-bar" id="sbMobileStickyBar">
+    <button id="btnStickyMirror" class="sb-btn-ghost is-on" title="Lật gương Selfie" style="padding: 10px 14px; border-radius: 9999px; font-size: 0.78rem;">
+      <span class="dot" style="width: 8px; height: 8px; border-radius: 50%; background: var(--sb-amber); display: inline-block;"></span>
+      <span>Lật Gương</span>
+    </button>
+
+    <button id="btnStickyCapture" class="sticky-shutter-btn">
+      <span class="sb-rec-dot"></span>
+      <span>BẮT ĐẦU CHỤP (8 TẤM)</span>
+    </button>
+
+    <button id="btnStickyTimer" class="sb-btn-ghost" title="Hẹn giờ đếm ngược" style="padding: 10px 14px; border-radius: 9999px; font-size: 0.78rem; font-family: var(--font-mono); color: var(--sb-amber);">
+      ⏱️ <span id="stickyTimerLabel">3s</span>
+    </button>
   </div>
 
   <!-- RESULT OVERLAY (COMMERCIAL KIOSK EDITION) -->

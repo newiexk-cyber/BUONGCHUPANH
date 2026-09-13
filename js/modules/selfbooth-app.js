@@ -1561,6 +1561,11 @@
 
       const vpCam = document.getElementById('sbViewport');
       const vpPrev = document.getElementById('sbPreviewViewport');
+      const stickyBar = document.getElementById('sbMobileStickyBar');
+
+      if (stickyBar) {
+        stickyBar.style.display = panelId === 'panelSetup' ? 'flex' : 'none';
+      }
 
       if (panelId === 'panelFinish') {
         if (vpCam) vpCam.style.display = 'none';
@@ -1867,6 +1872,39 @@
       document.getElementById('btnStartSelfbooth').addEventListener('click', () => this.startSession());
       document.getElementById('btnFreeMode').addEventListener('click', () => this.takeFreeShot());
       document.getElementById('btnCancelSession').addEventListener('click', () => this.switchPanel('panelSetup'));
+
+      // Sticky Bottom Shutter Bar Listeners (Always Accessible on Mobile)
+      const btnStickyCapture = document.getElementById('btnStickyCapture');
+      if (btnStickyCapture) {
+        btnStickyCapture.addEventListener('click', () => this.startSession());
+      }
+      const btnStickyMirror = document.getElementById('btnStickyMirror');
+      if (btnStickyMirror) {
+        btnStickyMirror.addEventListener('click', () => {
+          this.state.mirror = !this.state.mirror;
+          if (this.videoEl) this.videoEl.classList.toggle('no-mirror', !this.state.mirror);
+          const demoCanvas = document.getElementById('sbDemoCanvas');
+          if (demoCanvas) demoCanvas.classList.toggle('no-mirror', !this.state.mirror);
+          btnStickyMirror.classList.toggle('is-on', this.state.mirror);
+          const mirrorBtn = document.getElementById('btnMirrorToggle');
+          if (mirrorBtn) mirrorBtn.classList.toggle('is-on', this.state.mirror);
+        });
+      }
+      const btnStickyTimer = document.getElementById('btnStickyTimer');
+      if (btnStickyTimer) {
+        btnStickyTimer.addEventListener('click', () => {
+          const timers = [3, 5, 10];
+          const currIdx = timers.indexOf(this.state.timerSec);
+          const nextTimer = timers[(currIdx + 1) % timers.length];
+          this.state.timerSec = nextTimer;
+          const label = document.getElementById('stickyTimerLabel');
+          if (label) label.innerText = `${nextTimer}s`;
+          document.querySelectorAll('.timer-chip').forEach(b => {
+            b.classList.toggle('active', parseInt(b.dataset.timer, 10) === nextTimer);
+          });
+          if (window.audioEffects) window.audioEffects.playBeep(false);
+        });
+      }
 
       // 1. Layout chips (4-Cut & 8-Cut Frame selector in Panel 4)
       document.querySelectorAll('[data-layout]').forEach(btn => {
