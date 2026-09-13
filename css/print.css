@@ -1,0 +1,118 @@
+/**
+ * THERMAL PHOTOBOOTH PRINT STYLESHEET (DNP / CITIZEN / CANON 300 DPI)
+ * Supports standard Kiosk 2x6" strip and 4x6" postcard layouts with zero bleed margin.
+ */
+
+@media print {
+  /* Reset body and page */
+  @page {
+    size: auto;
+    margin: 0mm;
+  }
+
+  *, *::before, *::after {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    width: 100% !important;
+    height: 100% !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide entire interactive UI during print */
+  .selfbooth-body > *:not(#printKioskStage) {
+    display: none !important;
+  }
+
+  /* Dedicated High-Res Print Container */
+  #printKioskStage {
+    display: flex !important;
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: #ffffff !important;
+    justify-content: center !important;
+    align-items: center !important;
+    page-break-inside: avoid !important;
+    page-break-after: avoid !important;
+    z-index: 999999 !important;
+  }
+
+  /* 2x6 inch Photo Strip (Standard Cut) */
+  #printKioskStage.format-2x6 {
+    width: 50.8mm !important;
+    height: 152.4mm !important;
+    max-width: 50.8mm !important;
+    max-height: 152.4mm !important;
+  }
+
+  /* Dual 2x6 inch (4x6 cut into 2 strips) */
+  #printKioskStage.format-dual-2x6 {
+    display: flex !important;
+    flex-direction: row !important;
+    width: 101.6mm !important;
+    height: 152.4mm !important;
+    gap: 0mm !important;
+  }
+
+  #printKioskStage.format-dual-2x6 .print-strip-half {
+    width: 50.8mm !important;
+    height: 152.4mm !important;
+    box-sizing: border-box !important;
+    border-right: 0.2mm dashed #e4e4e7 !important;
+  }
+
+  /* 4x6 inch Postcard */
+  #printKioskStage.format-4x6 {
+    width: 101.6mm !important;
+    height: 152.4mm !important;
+    max-width: 101.6mm !important;
+    max-height: 152.4mm !important;
+  }
+
+  #printKioskStage img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+    display: block !important;
+    image-rendering: -webkit-optimize-contrast !important;
+    image-rendering: high-quality !important;
+  }
+}
+
+/* On-screen Print Modal preview */
+.print-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(12, 12, 14, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  padding: 20px;
+}
+
+.print-modal.show {
+  display: flex;
+}
+
+.print-dialog {
+  background: #18181b;
+  border: 1px solid #27272a;
+  border-radius: 20px;
+  padding: 28px;
+  width: 100%;
+  max-width: 520px;
+  box-shadow: 0 25px 60px rgba(0,0,0,0.6);
+  text-align: left;
+}

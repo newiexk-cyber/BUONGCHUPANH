@@ -1,0 +1,24 @@
+{
+  "name": "Buồng Chụp Ảnh — 35mm Analog Studio Kiosk",
+  "short_name": "Buồng Chụp Ảnh",
+  "description": "Phần mềm buồng chụp ảnh Kiosk 35mm chuyên nghiệp Life4Cuts style",
+  "start_url": "/selfbooth.html",
+  "display": "standalone",
+  "background_color": "#0c0c0e",
+  "theme_color": "#0c0c0e",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/assets/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

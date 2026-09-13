@@ -1472,8 +1472,78 @@
       document.getElementById('resGifImg').src = this.exportResults.gifDataUrl;
     }
 
-    showResultOverlay() {
-      document.getElementById('sbResultOverlay').classList.add('show');
+    async showResultOverlay() {
+      const overlay = document.getElementById('sbResultOverlay');
+      if (overlay) overlay.classList.add('show');
+
+      // 1. Cache to local storage for offline resiliency
+      if (this.exportResults.pngDataUrl) {
+        try { localStorage.setItem('last_export_png', this.exportResults.pngDataUrl); } catch(e){}
+      }
+      if (this.exportResults.gifDataUrl) {
+        try { localStorage.setItem('last_export_gif', this.exportResults.gifDataUrl); } catch(e){}
+      }
+
+      // 2. Archive to backend API to get secure Session & File ID for QR Code
+      let qrUrl = `${window.location.origin}/download.html`;
+      try {
+        const res = await fetch('/api/v1/photos/archive', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            dataUrl: this.exportResults.pngDataUrl,
+            filename: `kiosk_archive_${Date.now()}.png`,
+            caption: this.state.caption
+          })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.photo) {
+            qrUrl = `${window.location.origin}/download.html?sessionId=${encodeURIComponent(data.photo.sessionId)}&fileId=${encodeURIComponent(data.photo.fileId)}`;
+          }
+        }
+      } catch (err) {
+        console.warn('Backend archive failed, using local download URL:', err);
+      }
+
+      // 3. Render high-resolution vector QR Code
+      if (window.QRCode) {
+        window.QRCode.render('kioskQrContainer', qrUrl, { size: 180 });
+      }
+    }
+
+    openPrintModal() {
+      const modal = document.getElementById('sbPrintModal');
+      if (modal) modal.classList.add('show');
+    }
+
+    closePrintModal() {
+      const modal = document.getElementById('sbPrintModal');
+      if (modal) modal.classList.remove('show');
+    }
+
+    executeThermalPrint() {
+      const formatRadio = document.querySelector('input[name="printFormat"]:checked');
+      const format = formatRadio ? formatRadio.value : 'dual-2x6';
+      const stage = document.getElementById('printKioskStage');
+      if (!stage || !this.exportResults.pngDataUrl) return;
+
+      stage.className = '';
+      stage.innerHTML = '';
+
+      if (format === 'dual-2x6') {
+        stage.classList.add('format-dual-2x6');
+        stage.innerHTML = `
+          <div class="print-strip-half"><img src="${this.exportResults.pngDataUrl}" alt="Strip Left"></div>
+          <div class="print-strip-half"><img src="${this.exportResults.pngDataUrl}" alt="Strip Right"></div>
+        `;
+      } else {
+        stage.classList.add('format-4x6');
+        stage.innerHTML = `<img src="${this.exportResults.pngDataUrl}" alt="Postcard 4x6">`;
+      }
+
+      this.closePrintModal();
+      window.print();
     }
 
     switchPanel(panelId) {
@@ -2163,20 +2233,51 @@
         });
       }
 
+      // Thermal Print Modal Listeners
+      const btnPrintThermal = document.getElementById('btnPrintThermal');
+      if (btnPrintThermal) {
+        btnPrintThermal.addEventListener('click', () => this.openPrintModal());
+      }
+      const btnClosePrint = document.getElementById('btnClosePrintModal');
+      if (btnClosePrint) {
+        btnClosePrint.addEventListener('click', () => this.closePrintModal());
+      }
+      const btnCancelPrint = document.getElementById('btnCancelPrint');
+      if (btnCancelPrint) {
+        btnCancelPrint.addEventListener('click', () => this.closePrintModal());
+      }
+      const btnConfirmPrint = document.getElementById('btnConfirmPrint');
+      if (btnConfirmPrint) {
+        btnConfirmPrint.addEventListener('click', () => this.executeThermalPrint());
+      }
+
       // Download Buttons
-      document.getElementById('btnDownloadActive').addEventListener('click', () => this.downloadActiveResult());
-      document.getElementById('dlPngBtn').addEventListener('click', () => {
-        const a = document.createElement('a'); a.href = this.exportResults.pngDataUrl;
-        a.download = `buong-chup-anh-print-300dpi.png`; a.click();
-      });
-      document.getElementById('dlGifBtn').addEventListener('click', () => {
-        const a = document.createElement('a'); a.href = this.exportResults.gifDataUrl;
-        a.download = `buong-chup-anh-qua-trinh-hd.gif`; a.click();
-      });
-      document.getElementById('btnShootNew').addEventListener('click', () => {
-        document.getElementById('sbResultOverlay').classList.remove('show');
-        this.switchPanel('panelSetup');
-      });
+      const btnDownloadActive = document.getElementById('btnDownloadActive');
+      if (btnDownloadActive) {
+        btnDownloadActive.addEventListener('click', () => this.downloadActiveResult());
+      }
+      const dlPngBtn = document.getElementById('dlPngBtn');
+      if (dlPngBtn) {
+        dlPngBtn.addEventListener('click', () => {
+          const a = document.createElement('a'); a.href = this.exportResults.pngDataUrl;
+          a.download = `buong-chup-anh-print-300dpi.png`; a.click();
+        });
+      }
+      const dlGifBtn = document.getElementById('dlGifBtn');
+      if (dlGifBtn) {
+        dlGifBtn.addEventListener('click', () => {
+          const a = document.createElement('a'); a.href = this.exportResults.gifDataUrl;
+          a.download = `buong-chup-anh-qua-trinh-hd.gif`; a.click();
+        });
+      }
+      const btnShootNew = document.getElementById('btnShootNew');
+      if (btnShootNew) {
+        btnShootNew.addEventListener('click', () => {
+          const overlay = document.getElementById('sbResultOverlay');
+          if (overlay) overlay.classList.remove('show');
+          this.switchPanel('panelSetup');
+        });
+      }
     }
   }
 

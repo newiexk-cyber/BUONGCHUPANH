@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Tải Ảnh Kiosk 35mm — Buồng Chụp Ảnh</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..800;1,9..144,400..800&family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/main.css">
+  <style>
+    :root {
+      --sb-bg: #0c0c0e;
+      --sb-card: #18181b;
+      --sb-border: #27272a;
+      --sb-amber: #f59e0b;
+      --sb-terracotta: #ea580c;
+      --sb-text: #f4f4f5;
+      --sb-text-muted: #a1a1aa;
+    }
+
+    body {
+      background-color: var(--sb-bg);
+      color: var(--sb-text);
+      font-family: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, sans-serif;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .mobile-container {
+      width: 100%;
+      max-width: 480px;
+      padding: 24px 20px 48px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .brand-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(245, 158, 11, 0.12);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      padding: 6px 14px;
+      border-radius: 9999px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--sb-amber);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .hero-title {
+      font-family: 'Fraunces', serif;
+      font-size: 1.65rem;
+      font-weight: 800;
+      text-align: center;
+      margin: 0 0 6px 0;
+      letter-spacing: -0.02em;
+    }
+
+    .hero-subtitle {
+      font-size: 0.85rem;
+      color: var(--sb-text-muted);
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    /* Tab Switcher */
+    .tab-pills {
+      display: flex;
+      background: #18181b;
+      border: 1px solid var(--sb-border);
+      border-radius: 9999px;
+      padding: 4px;
+      gap: 4px;
+      width: 100%;
+      margin-bottom: 20px;
+    }
+
+    .tab-pill {
+      flex: 1;
+      padding: 10px 0;
+      border: none;
+      background: none;
+      color: var(--sb-text-muted);
+      font-weight: 700;
+      font-size: 0.82rem;
+      border-radius: 9999px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .tab-pill.active {
+      background: #27272a;
+      color: #ffffff;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+
+    /* Photo Frame Stage */
+    .preview-card {
+      background: #18181b;
+      border: 1px solid var(--sb-border);
+      border-radius: 20px;
+      padding: 16px;
+      width: 100%;
+      box-sizing: border-box;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 24px;
+      min-height: 380px;
+      position: relative;
+    }
+
+    .preview-card img {
+      max-width: 100%;
+      max-height: 520px;
+      height: auto;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+      display: block;
+      object-fit: contain;
+    }
+
+    /* Action Buttons */
+    .action-group {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .btn-download-primary {
+      width: 100%;
+      padding: 15px;
+      background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%);
+      color: #1c1917;
+      border: none;
+      border-radius: 14px;
+      font-weight: 800;
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(245, 158, 11, 0.25);
+      transition: transform 0.15s ease, filter 0.15s ease;
+      text-decoration: none;
+    }
+
+    .btn-download-primary:active {
+      transform: scale(0.98);
+      filter: brightness(0.95);
+    }
+
+    .btn-action-secondary {
+      width: 100%;
+      padding: 13px;
+      background: #18181b;
+      color: var(--sb-text);
+      border: 1px solid var(--sb-border);
+      border-radius: 14px;
+      font-weight: 700;
+      font-size: 0.88rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+
+    .btn-action-secondary:active {
+      background: #27272a;
+    }
+
+    .expiry-banner {
+      background: rgba(39, 39, 42, 0.6);
+      border: 1px dashed var(--sb-border);
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-size: 0.76rem;
+      color: var(--sb-text-muted);
+      text-align: center;
+      line-height: 1.4;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      justify-content: center;
+    }
+
+    .loading-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      color: var(--sb-text-muted);
+      font-size: 0.85rem;
+    }
+
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid rgba(245, 158, 11, 0.2);
+      border-top-color: var(--sb-amber);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="mobile-container">
+    <div class="brand-badge">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+      <span>35MM STUDIO ARCHIVE</span>
+    </div>
+
+    <h1 class="hero-title">Kỷ Niệm Buồng Chụp Ảnh</h1>
+    <p class="hero-subtitle">Ảnh chất lượng gốc 300 DPI & GIF chuyển động</p>
+
+    <!-- Tab switch -->
+    <div class="tab-pills">
+      <button class="tab-pill active" id="tabPng" onclick="switchTab('png')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+        Ảnh In 300 DPI
+      </button>
+      <button class="tab-pill" id="tabGif" onclick="switchTab('gif')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+        GIF Live Motion
+      </button>
+    </div>
+
+    <!-- Preview Card Stage -->
+    <div class="preview-card" id="previewContainer">
+      <div class="loading-state" id="loadingBox">
+        <div class="spinner"></div>
+        <div>Đang tải ảnh từ phòng tráng phim...</div>
+      </div>
+      <img id="imgPreviewPng" style="display: none;" alt="Ảnh in 300 DPI">
+      <img id="imgPreviewGif" style="display: none;" alt="GIF Live Timelapse">
+    </div>
+
+    <!-- Actions -->
+    <div class="action-group">
+      <a id="btnDownload" class="btn-download-primary" href="#" download="photobooth_300dpi.png">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+        LƯU ẢNH VỀ ĐIỆN THOẠI
+      </a>
+
+      <button class="btn-action-secondary" id="btnShare" onclick="sharePhoto()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+        Chia sẻ dải ảnh này
+      </button>
+
+      <a href="/selfbooth.html" class="btn-action-secondary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+        Chụp một cuộn phim mới
+      </a>
+    </div>
+
+    <!-- Expiry info -->
+    <div class="expiry-banner">
+      <span>🔒</span>
+      <span>Ảnh tự động bảo mật và xóa sau 24 giờ kể từ khi chụp.</span>
+    </div>
+  </div>
+
+  <script>
+    let currentMode = 'png';
+    let pngUrl = '';
+    let gifUrl = '';
+
+    const params = new URLSearchParams(window.location.search);
+    const sessionId = params.get('sessionId') || params.get('session');
+    const fileId = params.get('fileId') || params.get('id');
+
+    async function loadMedia() {
+      const loading = document.getElementById('loadingBox');
+      const imgPng = document.getElementById('imgPreviewPng');
+      const imgGif = document.getElementById('imgPreviewGif');
+      const btnDl = document.getElementById('btnDownload');
+
+      if (sessionId && fileId) {
+        pngUrl = `/api/v1/photos/view/${fileId}?sessionId=${sessionId}`;
+        imgPng.src = pngUrl;
+        imgPng.onload = () => {
+          loading.style.display = 'none';
+          imgPng.style.display = 'block';
+          btnDl.href = pngUrl;
+        };
+      } else {
+        // Localstorage fallback for preview demo
+        pngUrl = localStorage.getItem('last_export_png') || '';
+        gifUrl = localStorage.getItem('last_export_gif') || '';
+
+        if (pngUrl) {
+          loading.style.display = 'none';
+          imgPng.src = pngUrl;
+          imgPng.style.display = 'block';
+          btnDl.href = pngUrl;
+        } else {
+          loading.innerHTML = '<div>Không tìm thấy phiên chụp ảnh hoặc ảnh đã hết hạn (sau 24h).</div>';
+        }
+      }
+    }
+
+    function switchTab(mode) {
+      currentMode = mode;
+      const imgPng = document.getElementById('imgPreviewPng');
+      const imgGif = document.getElementById('imgPreviewGif');
+      const tabPng = document.getElementById('tabPng');
+      const tabGif = document.getElementById('tabGif');
+      const btnDl = document.getElementById('btnDownload');
+
+      if (mode === 'png') {
+        tabPng.classList.add('active');
+        tabGif.classList.remove('active');
+        imgPng.style.display = 'block';
+        imgGif.style.display = 'none';
+        btnDl.innerText = 'LƯU ẢNH IN 300 DPI';
+        btnDl.href = imgPng.src;
+        btnDl.download = 'photobooth_300dpi.png';
+      } else {
+        tabGif.classList.add('active');
+        tabPng.classList.remove('active');
+        imgGif.style.display = 'block';
+        imgPng.style.display = 'none';
+        btnDl.innerText = 'LƯU GIF LIVE MOTION (HD)';
+        btnDl.href = imgGif.src || imgPng.src;
+        btnDl.download = 'photobooth_motion.gif';
+      }
+    }
+
+    async function sharePhoto() {
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: 'Buồng Chụp Ảnh 35mm Analog',
+            text: 'Xem dải ảnh kỷ niệm photobooth của mình nè!',
+            url: window.location.href
+          });
+        } catch (e) {}
+      } else {
+        navigator.clipboard.writeText(window.location.href);
+        alert('Đã sao chép liên kết tải ảnh vào bộ nhớ tạm!');
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', loadMedia);
+  </script>
+</body>
+</html>
