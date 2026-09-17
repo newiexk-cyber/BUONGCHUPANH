@@ -1,23 +1,116 @@
 'use client';
 
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import api from '../services/api';
 
 export default function HomePage() {
+  const [apiStatus, setApiStatus] = useState({ checking: true, online: false, data: null });
+  const [testLog, setTestLog] = useState([]);
+
+  const addLog = (msg) => {
+    setTestLog(prev => [
+      `[${new Date().toLocaleTimeString()}] ${msg}`,
+      ...prev.slice(0, 7)
+    ]);
+  };
+
+  // Check Backend Health on Mount
+  useEffect(() => {
+    let isMounted = true;
+    async function checkBackend() {
+      try {
+        const res = await api.checkHealth();
+        if (isMounted) {
+          setApiStatus({ checking: false, online: true, data: res });
+          addLog(`Backend 3 Tầng kết nối thành công (Port 5000) • Uptime: ${Math.round(res.uptime || 0)}s`);
+        }
+      } catch (err) {
+        if (isMounted) {
+          setApiStatus({ checking: false, online: false, data: null });
+          addLog(`Backend 3 Tầng chưa kết nối (Khởi động bằng 'docker compose up' hoặc 'cd backend && npm start')`);
+        }
+      }
+    }
+    checkBackend();
+    return () => { isMounted = false; };
+  }, []);
+
+  const handlePingTest = async () => {
+    addLog('Đang gửi ping kiểm tra kết nối API 3 Tầng...');
+    try {
+      const res = await api.checkHealth();
+      setApiStatus({ checking: false, online: true, data: res });
+      addLog(`✅ API Online! Status: ${res.status} | Time: ${res.timestamp || new Date().toISOString()}`);
+    } catch (err) {
+      setApiStatus({ checking: false, online: false, data: null });
+      addLog(`❌ Không thể kết nối API: ${err.message}`);
+    }
+  };
+
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#0a0a0a', color: '#f5f5f7' }}>
+      {/* Top Telemetry & Status Bar */}
+      <div style={{
+        background: '#111114',
+        borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+        padding: '8px 24px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        fontSize: '0.75rem',
+        fontFamily: 'var(--font-mono)'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <span style={{ color: 'var(--accent-gold)', fontWeight: 700 }}>ZUMP.PI KIOSK PLATFORM</span>
+          <span style={{ color: 'rgba(255,255,255,0.3)' }}>|</span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{
+              width: '8px',
+              height: '8px',
+              borderRadius: '50%',
+              background: apiStatus.online ? '#10b981' : (apiStatus.checking ? '#f59e0b' : '#ef4444'),
+              boxShadow: apiStatus.online ? '0 0 8px #10b981' : 'none'
+            }}></span>
+            {apiStatus.checking
+              ? 'Đang kiểm tra kết nối Backend...'
+              : (apiStatus.online ? 'Backend 3-Tier: ONLINE (Port 5000)' : 'Backend 3-Tier: OFFLINE')}
+          </span>
+        </div>
+
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <button
+            onClick={handlePingTest}
+            style={{
+              background: 'rgba(255,255,255,0.06)',
+              border: '1px solid rgba(255,255,255,0.12)',
+              color: 'var(--accent-gold)',
+              padding: '3px 10px',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '0.72rem',
+              fontFamily: 'var(--font-mono)'
+            }}
+          >
+            ⚡ Test Ping API
+          </button>
+          <span style={{ color: 'rgba(255,255,255,0.4)' }}>Docker & Nginx Ready</span>
+        </div>
+      </div>
+
       {/* Navigation Header */}
       <header className="z-header">
         <Link href="/" className="z-brand">
           <span style={{ color: 'var(--accent-gold)' }}>ZUMP.PI</span>
           <span>STUDIO</span>
-          <span className="z-badge">35MM KIOSK</span>
+          <span className="z-badge">ENTERPRISE 3-TIER</span>
         </Link>
         <div style={{ display: 'flex', gap: '10px' }}>
           <Link href="/admin" className="btn-ghost" style={{ fontSize: '0.78rem' }}>
             ⚙️ Quản Trị Admin
           </Link>
           <Link href="/studio" className="btn-primary" style={{ fontSize: '0.78rem', padding: '8px 16px' }}>
-            📸 Vào Buồng Chụp
+            📸 Vào Buồng Chụp (Kiosk)
           </Link>
         </div>
       </header>
@@ -40,7 +133,7 @@ export default function HomePage() {
           marginBottom: '20px'
         }}>
           <span>✦</span>
-          <span>VISUAL PRODUCTION & COMMERCIAL KIOSK ENGINE</span>
+          <span>ENTERPRISE ARCHITECTURE: NEXT.JS 14 & EXPRESS 3-TIER</span>
         </div>
 
         <h1 style={{
@@ -52,28 +145,106 @@ export default function HomePage() {
           maxWidth: '850px',
           marginBottom: '18px'
         }}>
-          Buồng Chụp Ảnh Kiosk <span style={{ color: 'var(--accent-gold)' }}>35mm Analog</span>
+          Buồng Chụp Ảnh Kiosk <span style={{ color: 'var(--accent-gold)' }}>Zump.pi Production</span>
         </h1>
 
         <p style={{
           fontSize: 'clamp(0.95rem, 1.8vw, 1.15rem)',
           color: 'var(--text-secondary)',
-          maxWidth: '620px',
+          maxWidth: '640px',
           lineHeight: 1.6,
-          marginBottom: '36px'
+          marginBottom: '32px'
         }}>
-          Hệ thống chụp ảnh tự động phong cách Photoism & Zump.pi Production. Tráng phim 300 DPI, tạo GIF timelapse, quét mã QR tải về điện thoại và in nhiệt lấy liền.
+          Giao diện Dark Minimalist chuẩn Zump.pi Production. Phân tách hoàn toàn Frontend & Backend, tích hợp nút chụp Sticky Shutter Bar, bộ chuyển đổi camera, xuất ảnh 300 DPI và quét QR nhận ảnh.
         </p>
 
-        {/* Action Buttons */}
-        <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', justifyContent: 'center', marginBottom: '60px' }}>
+        {/* Primary Action Buttons */}
+        <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', justifyContent: 'center', marginBottom: '36px' }}>
           <Link href="/studio" className="btn-primary" style={{ padding: '16px 36px', fontSize: '1.05rem' }}>
             <span className="rec-blinker"></span>
-            BẮT ĐẦU CHỤP ẢNH (KIOSK)
+            📸 BẮT ĐẦU CHỤP (KIOSK STUDIO)
           </Link>
           <Link href="/admin" className="btn-ghost" style={{ padding: '16px 28px', fontSize: '1rem' }}>
-            Quản Lý Filters & Canva
+            ⚙️ BẢNG QUẢN TRỊ ADMIN
           </Link>
+          <Link
+            href="/download?sessionId=demo-session-2026&fileId=sample-strip"
+            className="btn-ghost"
+            style={{ padding: '16px 24px', fontSize: '0.92rem', color: 'var(--text-secondary)' }}
+          >
+            📱 Test Trang QR Mobile
+          </Link>
+        </div>
+
+        {/* Live Test Diagnostic Console */}
+        <div style={{
+          width: '100%',
+          maxWidth: '800px',
+          background: '#121215',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          borderRadius: '16px',
+          padding: '20px',
+          textAlign: 'left',
+          marginBottom: '48px',
+          boxShadow: '0 20px 40px rgba(0,0,0,0.5)'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+            <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--accent-gold)', fontWeight: 700 }}>
+              TERMINAL KIỂM THỬ HỆ THỐNG (SYSTEM TEST CONSOLE)
+            </span>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                onClick={handlePingTest}
+                style={{
+                  background: 'rgba(255,255,255,0.06)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  color: '#fff',
+                  fontSize: '0.7rem',
+                  padding: '4px 8px',
+                  borderRadius: '6px',
+                  cursor: 'pointer'
+                }}
+              >
+                Ping Health
+              </button>
+              <button
+                onClick={() => setTestLog([])}
+                style={{
+                  background: 'transparent',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  color: 'rgba(255,255,255,0.4)',
+                  fontSize: '0.7rem',
+                  padding: '4px 8px',
+                  borderRadius: '6px',
+                  cursor: 'pointer'
+                }}
+              >
+                Xóa Log
+              </button>
+            </div>
+          </div>
+
+          <div style={{
+            background: '#070709',
+            border: '1px solid rgba(255, 255, 255, 0.05)',
+            borderRadius: '8px',
+            padding: '12px 16px',
+            fontFamily: 'var(--font-mono)',
+            fontSize: '0.76rem',
+            minHeight: '80px',
+            color: '#10b981',
+            lineHeight: 1.6
+          }}>
+            {testLog.length === 0 ? (
+              <span style={{ color: 'rgba(255,255,255,0.3)' }}>Chưa có log tương tác. Bấm "Ping Health" để thử nghiệm kết nối.</span>
+            ) : (
+              testLog.map((log, index) => (
+                <div key={index} style={{ color: log.includes('❌') ? '#f87171' : (log.includes('✅') ? '#34d399' : '#e2e8f0') }}>
+                  {log}
+                </div>
+              ))
+            )}
+          </div>
         </div>
 
         {/* Feature Highlights Grid */}
@@ -86,34 +257,34 @@ export default function HomePage() {
           textAlign: 'left'
         }}>
           <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '16px', padding: '24px' }}>
-            <div style={{ fontSize: '1.8rem', marginBottom: '12px' }}>🎞️</div>
-            <div style={{ fontWeight: 800, fontSize: '1.05rem', marginBottom: '6px' }}>50+ Bộ Lọc Phim 35mm</div>
+            <div style={{ fontSize: '1.8rem', marginBottom: '12px' }}>🎯</div>
+            <div style={{ fontWeight: 800, fontSize: '1.05rem', marginBottom: '6px' }}>Nút Chụp Sticky Cố Định</div>
             <div style={{ color: 'var(--text-secondary)', fontSize: '0.84rem', lineHeight: 1.5 }}>
-              Kodak Gold 200, CineStill 800T, Fuji Pro 400H và các tone màu làm đẹp chân dung Hàn Quốc.
+              Nút chụp luôn hiển thị ở mép dưới viewport, không cần cuộn trang trên màn hình cảm ứng hoặc thiết bị di động.
             </div>
           </div>
 
           <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '16px', padding: '24px' }}>
-            <div style={{ fontSize: '1.8rem', marginBottom: '12px' }}>📱</div>
-            <div style={{ fontWeight: 800, fontSize: '1.05rem', marginBottom: '6px' }}>Mã QR Tải Về Mobile</div>
+            <div style={{ fontSize: '1.8rem', marginBottom: '12px' }}>🔄</div>
+            <div style={{ fontWeight: 800, fontSize: '1.05rem', marginBottom: '6px' }}>Đổi Camera & Virtual Studio</div>
             <div style={{ color: 'var(--text-secondary)', fontSize: '0.84rem', lineHeight: 1.5 }}>
-              Khách dùng điện thoại quét mã QR tại buồng để lưu file 300 DPI và GIF HD chỉ với 1 chạm.
+              Chuyển đổi tức thì giữa các thiết bị webcam/máy ảnh và chế độ Studio Ảo chạy thử khi không có webcam thật.
             </div>
           </div>
 
           <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '16px', padding: '24px' }}>
-            <div style={{ fontSize: '1.8rem', marginBottom: '12px' }}>🖨️</div>
-            <div style={{ fontWeight: 800, fontSize: '1.05rem', marginBottom: '6px' }}>In Nhiệt 2x6" & 4x6"</div>
+            <div style={{ fontSize: '1.8rem', marginBottom: '12px' }}>⚙️</div>
+            <div style={{ fontWeight: 800, fontSize: '1.05rem', marginBottom: '6px' }}>Bảng Quản Trị Admin Mới</div>
             <div style={{ color: 'var(--text-secondary)', fontSize: '0.84rem', lineHeight: 1.5 }}>
-              Căn chuẩn in ấn tự động không viền, hỗ trợ các dòng máy in DNP DS-RX1HS, Citizen, Canon Selphy.
+              Theo dõi dung lượng ổ cứng thời gian thực, quản trị khung mẫu Canva, cấu hình bộ lọc và dọn dẹp bộ nhớ.
             </div>
           </div>
 
           <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '16px', padding: '24px' }}>
-            <div style={{ fontSize: '1.8rem', marginBottom: '12px' }}>🛡️</div>
-            <div style={{ fontWeight: 800, fontSize: '1.05rem', marginBottom: '6px' }}>Bảo Mật Enterprise 3 Tầng</div>
+            <div style={{ fontSize: '1.8rem', marginBottom: '12px' }}>🐳</div>
+            <div style={{ fontWeight: 800, fontSize: '1.05rem', marginBottom: '6px' }}>Docker & Nginx Chuẩn Hóa</div>
             <div style={{ color: 'var(--text-secondary)', fontSize: '0.84rem', lineHeight: 1.5 }}>
-              Kiểm tra nhị phân Magic Bytes, cô lập phiên chụp, ẩn token Canva và tự động dọn dẹp sau 24h.
+              Khởi chạy toàn bộ hệ sinh thái chỉ bằng 1 lệnh <code>docker compose up -d</code> với cấu hình Nginx Reverse Proxy.
             </div>
           </div>
         </div>
