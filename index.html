@@ -328,6 +328,32 @@
     <div class="floating-dot" style="width: 7px; height: 7px; top: 60%; left: 6%; animation-delay: 3s;"></div>
   </div>
 
+  <!-- Quick Test Switcher Bar for Next.js & 3-Tier Backend -->
+  <div style="background: #121214; border-bottom: 1px solid rgba(255,255,255,0.1); padding: 10px 24px; display: flex; align-items: center; justify-content: space-between; font-family: 'JetBrains Mono', monospace; font-size: 0.76rem; color: #fff; flex-wrap: wrap; gap: 12px; z-index: 1000; position: relative;">
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <span style="background: #f59e0b; color: #000; font-weight: 800; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem;">ZUMP.PI PRODUCTION</span>
+      <span style="color: rgba(255,255,255,0.6);">Hệ Thống Mới: Next.js 14 & Backend 3 Tầng</span>
+      <span id="beStatusBadge" style="display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; border-radius: 9999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); font-size: 0.7rem;">
+        <span style="width: 7px; height: 7px; border-radius: 50%; background: #f59e0b;"></span>
+        <span>Đang kiểm tra API...</span>
+      </span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+      <a href="http://localhost:3000/studio" target="_blank" style="background: #f59e0b; color: #000; font-weight: 700; text-decoration: none; padding: 6px 14px; border-radius: 8px; transition: 0.2s;">
+        📸 Kiosk Studio (Next.js)
+      </a>
+      <a href="http://localhost:3000/admin" target="_blank" style="background: rgba(255,255,255,0.08); color: #fff; text-decoration: none; padding: 6px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15);">
+        ⚙️ Admin Dashboard
+      </a>
+      <a href="http://localhost:3000/download?sessionId=demo-session-2026&fileId=demo-file" target="_blank" style="background: rgba(255,255,255,0.08); color: #fff; text-decoration: none; padding: 6px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15);">
+        📱 QR Mobile Download
+      </a>
+      <a href="http://localhost:5000/api/v1/health" target="_blank" style="background: rgba(16,185,129,0.15); color: #10b981; border: 1px solid rgba(16,185,129,0.3); text-decoration: none; padding: 6px 12px; border-radius: 8px;">
+        🩺 Health API
+      </a>
+    </div>
+  </div>
+
   <!-- Header Bar -->
   <header class="app-header">
     <a href="index.html" class="brand-logo">
@@ -346,11 +372,10 @@
     </a>
 
     <div class="header-actions">
-      <!-- Nút mở modal Tethering DSLR -->
-      <button id="btnOpenTether" class="tether-badge">
-        <span class="dot-indicator"></span>
-        <span id="tetherBadgeLabel">Kết nối máy ảnh (DSLR/USB)</span>
-      </button>
+      <!-- Nút vào Admin -->
+      <a href="http://localhost:3000/admin" target="_blank" class="btn btn-secondary" style="text-decoration: none; padding: 8px 16px; font-size: 0.8rem; display: flex; align-items: center; gap: 6px;">
+        <span>⚙️</span> Quản Trị Admin
+      </a>
 
       <!-- Nút nạp file .ptb -->
       <label class="btn btn-secondary" style="margin: 0; cursor: pointer; padding: 8px 16px; font-size: 0.8rem;">
@@ -369,9 +394,9 @@
   <main class="hero-wrapper">
     <!-- Top Archival Stamp Notice -->
     <div class="notice-bubble">
-      <div class="notice-pill">35MM STUDIO ARCHIVE</div>
+      <div class="notice-pill">ZUMP.PI STUDIO ENGINE</div>
       <div class="notice-text">
-        Chụp tự động 8 tấm, màu phim vintage, tải khung Canva tùy ý & xuất PNG 300 DPI, GIF chuyển động!
+        Đã nâng cấp Next.js 14 & Backend 3 Tầng • Nút chụp Sticky Shutter • Render 300 DPI • Bảo mật Token Canva!
       </div>
     </div>
 
@@ -398,25 +423,34 @@
         <div class="hero-vintage-sub">EST. 2026 • RETRO PHOTO LAB</div>
         <h1 class="hero-big-title">BUỒNG CHỤP ẢNH</h1>
         <p class="hero-description">
-          Trải nghiệm buồng chụp ảnh hoài cổ phong cách Hàn Quốc. Tự do tạo dáng, tùy biến khung in từ Canva và lưu giữ trọn vẹn từng khoảnh khắc thanh xuân.
+          Trải nghiệm buồng chụp ảnh Kiosk phong cách Zump.pi Production. Tự do tạo dáng, đổi camera linh hoạt, nút chụp luôn nổi cố định và xuất ảnh 300 DPI siêu nét.
         </p>
 
-        <!-- Brass Shutter Button -->
-        <a href="selfbooth.html" class="btn-start-vintage">
-          <span>BẮT ĐẦU CHỤP</span>
-          <span>📸</span>
-        </a>
+        <!-- Main Action Buttons -->
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 14px; margin-bottom: 20px;">
+          <a href="http://localhost:3000/studio" class="btn-start-vintage" style="box-shadow: 0 14px 38px rgba(245, 158, 11, 0.4);">
+            <span>📸 VÀO KIOSK STUDIO MỚI (NEXT.JS)</span>
+          </a>
+          <div style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;">
+            <a href="http://localhost:3000/admin" class="feat-card" style="border-color: rgba(245,158,11,0.4); color: var(--accent-amber);">
+              <span>⚙️</span> Bảng Quản Trị Admin
+            </a>
+            <a href="selfbooth.html" class="feat-card" style="color: var(--text-muted);">
+              <span>🎞️</span> Bản Kiosk Cũ (HTML Classic)
+            </a>
+          </div>
+        </div>
 
         <!-- Feature Tags -->
         <div class="features-pill-group">
           <span class="feat-card">
-            <span>🎞️</span> 14 Bố Cục Khung 4 Ô & 8 Ô
+            <span>🎯</span> Nút Chụp Sticky Cố Định
           </span>
           <span class="feat-card">
-            <span>🎨</span> Tải Lên Khung Tự Vẽ Canva
+            <span>🔄</span> Đổi Camera Trực Tiếp
           </span>
           <span class="feat-card">
-            <span>⚡</span> Ảnh In 300 DPI & GIF HD
+            <span>⚡</span> Ảnh In 300 DPI & QR Mobile
           </span>
         </div>
       </div>
@@ -428,6 +462,15 @@
           <div class="strip-cell cell-olive">🌿</div>
           <div class="strip-cell cell-olive">📷</div>
           <div class="strip-cell cell-olive">🌿</div>
+          <div class="strip-cell cell-olive">✨</div>
+          <div class="strip-cell cell-olive">🌿</div>
+          <div class="strip-cell cell-olive">📷</div>
+          <div class="strip-cell cell-olive">🌿</div>
+          <div class="strip-cell cell-olive">✨</div>
+        </div>
+        <div class="strip-footer-script">EXP 36 • ISO 400</div>
+      </div>
+    </div>
           <div class="strip-cell cell-olive">✨</div>
           <div class="strip-cell cell-olive">🌿</div>
           <div class="strip-cell cell-olive">📷</div>
@@ -498,6 +541,33 @@
         }
       });
     }
+
+    // Auto-check Backend 3-Tier API Status
+    async function checkBackendStatus() {
+      const badge = document.getElementById('beStatusBadge');
+      if (!badge) return;
+      try {
+        const res = await fetch('http://localhost:5000/api/v1/health', { method: 'GET', cache: 'no-store' });
+        if (res.ok) {
+          badge.innerHTML = `
+            <span style="width: 7px; height: 7px; border-radius: 50%; background: #10b981; box-shadow: 0 0 6px #10b981;"></span>
+            <span style="color: #10b981; font-weight: 700;">Backend 3-Tier: ONLINE (Port 5000)</span>
+          `;
+          badge.style.borderColor = 'rgba(16, 185, 129, 0.4)';
+          badge.style.background = 'rgba(16, 185, 129, 0.1)';
+        } else {
+          throw new Error('API Error');
+        }
+      } catch (e) {
+        badge.innerHTML = `
+          <span style="width: 7px; height: 7px; border-radius: 50%; background: #ef4444;"></span>
+          <span style="color: #f87171;">Backend: OFFLINE (Chạy 'docker compose up' hoặc 'npm start')</span>
+        `;
+        badge.style.borderColor = 'rgba(239, 68, 68, 0.4)';
+        badge.style.background = 'rgba(239, 68, 68, 0.1)';
+      }
+    }
+    checkBackendStatus();
   </script>
 </body>
 </html>
