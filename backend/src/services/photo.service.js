@@ -1,31 +1,16 @@
 /**
- * SECURE PHOTO STORAGE SERVICE
- * Handles tenant-isolated storage, Magic Bytes validation, UUID naming, and safe streaming.
+ * PHOTO SERVICE (BUSINESS LOGIC LAYER)
+ * Handles Magic Bytes validation, UUID naming, payload security, and delegates to PhotoRepository.
  */
 
-const fs = require('fs');
-const path = require('path');
 const crypto = require('crypto');
 const config = require('../config');
-const { validateMagicBytes, detectFormat } = require('../utils/magicBytes');
+const { detectFormat } = require('../utils/magicBytes');
+const photoRepository = require('../repositories/photo.repository');
 
 class PhotoService {
   /**
-   * Resolves and creates the private directory for a given session
-   */
-  async getSessionDir(sessionId) {
-    const safeSessionId = path.basename(sessionId);
-    const sessionDir = path.join(config.paths.photosDir, safeSessionId);
-
-    if (!fs.existsSync(sessionDir)) {
-      await fs.promises.mkdir(sessionDir, { recursive: true });
-    }
-
-    return sessionDir;
-  }
-
-  /**
-   * Validates Magic Bytes and saves photo to private session storage
+   * Validates Magic Bytes and saves photo to private session storage via repository
    */
   async savePhoto(sessionId, base64String, requestedFormat = 'png', caption = '') {
     if (!sessionId) {
@@ -58,18 +43,18 @@ class PhotoService {
     }
 
     const ext = detectedExt;
-    const sessionDir = await this.getSessionDir(sessionId);
 
     // 4. Generate unique UUID v4 filename (collision-free)
     const fileUUID = crypto.randomUUID ? crypto.randomUUID() : crypto.randomBytes(16).toString('hex');
     const filename = `strip_${fileUUID}.${ext}`;
-    const filePath = path.join(sessionDir, filename);
 
-    await fs.promises.writeFile(filePath, dataBuffer);
+    // 5. Delegate storage I/O to Repository layer
+    const filePath = await photoRepository.writePhotoFile(sessionId, filename, dataBuffer);
 
     return {
       fileId: fileUUID,
       filename,
+      savedPath: filePath,
       sessionId,
       sizeBytes: dataBuffer.length,
       format: ext,
@@ -80,51 +65,21 @@ class PhotoService {
   }
 
   /**
-   * Retrieves photos strictly belonging to the caller's session
+   * Retrieves photos strictly belonging to the caller's session via repository
    */
   async listPhotosBySession(sessionId) {
-    const sessionDir = await this.getSessionDir(sessionId);
-    const files = await fs.promises.readdir(sessionDir);
-    const photos = [];
-
-    for (const file of files) {
-      const filePath = path.join(sessionDir, file);
-      const stat = await fs.promises.stat(filePath);
-
-      if (stat.isFile()) {
-        const fileUUID = file.replace(/^strip_|\.[^.]+$/g, '');
-        photos.push({
-          fileId: fileUUID,
-          filename: file,
-          sessionId,
-          sizeBytes: stat.size,
-          createdAt: stat.birthtime || stat.mtime,
-          downloadUrl: `/api/v1/photos/view/${fileUUID}?sessionId=${sessionId}`
-        });
-      }
-    }
-
-    return photos.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    const photos = await photoRepository.listSessionPhotos(sessionId);
+    return photos.map(p => ({
+      ...p,
+      downloadUrl: `/api/v1/photos/view/${p.fileId}?sessionId=${sessionId}`
+    })).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
   }
 
   /**
-   * Safely retrieves photo file path verifying session ownership
+   * Safely retrieves photo file path verifying session ownership via repository
    */
   async getPhotoPathBySession(sessionId, fileUUID) {
-    if (!sessionId || !fileUUID) return null;
-
-    const safeSessionId = path.basename(sessionId);
-    const safeUUID = path.basename(fileUUID);
-    const sessionDir = path.join(config.paths.photosDir, safeSessionId);
-
-    if (!fs.existsSync(sessionDir)) return null;
-
-    const files = await fs.promises.readdir(sessionDir);
-    const targetFile = files.find(f => f.includes(safeUUID));
-
-    if (!targetFile) return null;
-
-    return path.join(sessionDir, targetFile);
+    return photoRepository.findPhotoPath(sessionId, fileUUID);
   }
 }
 

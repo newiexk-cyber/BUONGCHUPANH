@@ -1,5 +1,5 @@
 /**
- * STANDALONE NATIVE UNIT TEST FOR BACKEND CORE SERVICES
+ * STANDALONE NATIVE UNIT TEST FOR BACKEND CORE SERVICES & 3-TIER ARCHITECTURE
  * Runs directly on Node.js without third-party dependencies.
  */
 
@@ -10,6 +10,8 @@ const fs = require('fs');
 const { validateMagicBytes, detectFormat } = require('../../backend/src/utils/magicBytes');
 const cleanupService = require('../../backend/src/services/cleanup.service');
 const photoService = require('../../backend/src/services/photo.service');
+const adminService = require('../../backend/src/services/admin.service');
+const templateRepository = require('../../backend/src/repositories/template.repository');
 
 async function runUnitTests() {
   console.log('🧪 Starting Photobooth Core Backend & Security Unit Tests...\n');
@@ -88,8 +90,48 @@ async function runUnitTests() {
     fs.rmSync(sessionDir, { recursive: true, force: true });
   });
 
-  // 3. 24h Auto-cleanup Service
-  console.log('\n--- 3. Retention & Cleanup Service ---');
+  // 3. Template & Filter Repository Tests
+  console.log('\n--- 3. Template & Filter Repository (3-Tier) ---');
+  await testAsync('Reads templates and filters with default fallbacks', async () => {
+    const templates = await templateRepository.getAllTemplates();
+    assert(Array.isArray(templates), 'Templates must be an array');
+    assert(templates.length >= 1, 'Should have at least 1 default template');
+
+    const filters = await templateRepository.getAllFilters();
+    assert(Array.isArray(filters), 'Filters must be an array');
+    assert(filters.length >= 1, 'Should have at least 1 default filter');
+  });
+
+  await testAsync('Saves, toggles, and deletes custom template in Repository', async () => {
+    const testTplId = `tpl_test_${Date.now()}`;
+    const savedList = await templateRepository.saveTemplate({
+      id: testTplId,
+      name: 'Unit Test Template',
+      orientation: 'vertical',
+      slots: 4,
+      canvaDesignId: 'TEST_CANVA_999'
+    });
+    assert(Array.isArray(savedList), 'Should return list of templates');
+    const created = savedList.find(t => t.id === testTplId);
+    assert(created, 'Should find newly created template');
+    assert.strictEqual(created.name, 'Unit Test Template');
+
+    const deleted = await templateRepository.deleteTemplate(testTplId);
+    assert.strictEqual(deleted, true, 'Should return true on successful deletion');
+  });
+
+  // 4. Admin Service & System Metrics
+  console.log('\n--- 4. Admin Service & System Metrics ---');
+  await testAsync('Generates admin overview statistics with memory and storage telemetry', async () => {
+    const overview = await adminService.getDashboardOverview();
+    assert(overview.system, 'Overview should contain system section');
+    assert(overview.storage, 'Overview should contain storage section');
+    assert(typeof overview.storage.usedMB === 'number');
+    assert(typeof overview.system.memoryUsageMB === 'number');
+  });
+
+  // 5. 24h Auto-cleanup Service
+  console.log('\n--- 5. Retention & Cleanup Service ---');
   await testAsync('Purges session directories older than retention threshold (24h)', async () => {
     const oldSessionId = 'expired-session-to-purge';
     const oldSessionDir = path.join(__dirname, '../../backend/storage/photos', oldSessionId);
