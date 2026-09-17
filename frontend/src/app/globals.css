@@ -1,0 +1,206 @@
+/* ==============================================================================
+   ZUMP.PI PRODUCTION — LUXURY MINIMALIST STUDIO DESIGN SYSTEM (NEXT.JS)
+   Inspired by https://zumppi.vn/ (Photography, Videography & Visual Design Agency)
+   ============================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,600&family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --bg-primary: #0a0a0a;
+  --bg-surface: #141416;
+  --bg-surface-elevated: #18181b;
+  --bg-surface-hover: #222226;
+  
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-medium: rgba(255, 255, 255, 0.16);
+  --border-active: #f59e0b;
+
+  --text-primary: #f4f4f5;
+  --text-secondary: #a1a1aa;
+  --text-dim: #71717a;
+
+  --accent-gold: #f59e0b;
+  --accent-vermilion: #ea580c;
+  --accent-emerald: #10b981;
+  --accent-rose: #f43f5e;
+
+  --font-editorial: 'Fraunces', Georgia, serif;
+  --font-sans: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Common Components */
+.z-header {
+  height: 64px;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(10, 10, 10, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border-subtle);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.z-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: var(--text-primary);
+  font-family: var(--font-editorial);
+  font-size: 1.18rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.z-badge {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 700;
+  background: rgba(245, 158, 11, 0.12);
+  color: var(--accent-gold);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  padding: 2px 8px;
+  border-radius: 9999px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%);
+  color: #0a0a0a;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 22px;
+  font-size: 0.88rem;
+  font-weight: 800;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 18px rgba(245, 158, 11, 0.25);
+  transition: all 0.15s ease;
+  text-decoration: none;
+}
+
+.btn-primary:hover {
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+}
+
+.btn-ghost {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 10px 18px;
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+  text-decoration: none;
+}
+
+.btn-ghost:hover {
+  background: var(--bg-surface-hover);
+  border-color: var(--border-medium);
+}
+
+/* Sticky Shutter Bar (Fixed on Mobile & Kiosk Touchscreens) */
+.sticky-capture-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 72px;
+  background: rgba(10, 10, 10, 0.92);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  z-index: 100;
+  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.6);
+}
+
+.shutter-btn-main {
+  flex: 1;
+  max-width: 320px;
+  margin: 0 auto;
+  height: 50px;
+  background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%);
+  color: #0a0a0a;
+  border: none;
+  border-radius: 9999px;
+  font-size: 0.94rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+  box-shadow: 0 0 25px rgba(245, 158, 11, 0.35);
+  transition: all 0.15s ease;
+}
+
+.shutter-btn-main:active {
+  transform: scale(0.97);
+}
+
+.rec-blinker {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #ef4444;
+  box-shadow: 0 0 8px #ef4444;
+  animation: recPulse 1.5s infinite;
+  display: inline-block;
+}
+
+@keyframes recPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.3; transform: scale(0.85); }
+}
+
+@media print {
+  @page { size: auto; margin: 0mm; }
+  body > *:not(#printKioskStage) { display: none !important; }
+  #printKioskStage {
+    display: flex !important;
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: #fff !important;
+    justify-content: center !important;
+    align-items: center !important;
+  }
+}
