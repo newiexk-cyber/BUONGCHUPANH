@@ -18,6 +18,5 @@ start "" "http://localhost:3000/selfbooth.html"
 
 echo [2/2] Đang khởi chạy Server tại cổng 3000...
 echo Nhấn Ctrl + C để dừng server khi muốn tắt.
-echo.
-"%NODE_EXE%" server.js
+"%NODE_EXE%" backend/server-legacy.js
 pause

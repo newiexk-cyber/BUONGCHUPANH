@@ -17,8 +17,7 @@ module.exports = defineConfig({
     viewport: { width: 1280, height: 800 },
     permissions: ['camera']
   },
-  webServer: {
-    command: 'node server.js',
+    command: 'node backend/server-legacy.js',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
     timeout: 10000

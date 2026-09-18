@@ -1,5 +1,5 @@
 /**
- * ONLINE PHOTOBOOTH STUDIO — UNIFIED SERVER LAUNCHER
+ * ONLINE PHOTOBOOTH STUDIO — UNIFIED NATIVE SERVER LAUNCHER (BACKEND)
  * Runs Express.js if installed, or gracefully runs high-performance native Node.js HTTP server.
  */
 
@@ -10,7 +10,7 @@ const url = require('url');
 
 try {
   // 1. Try booting Enterprise Express.js server if dependencies are installed
-  require('./backend/server');
+  require('./server');
 } catch (err) {
   if (err.code === 'MODULE_NOT_FOUND' && err.message.includes('express')) {
     console.log('\n[INFO] Khởi chạy bằng Native Node.js HTTP Server (Zero Dependencies Mode)...');
@@ -22,10 +22,10 @@ try {
 }
 
 function startNativeServer() {
-  const PORT = process.env.PORT || 3000;
-  const photoService = require('./backend/src/services/photo.service');
-  const cleanupService = require('./backend/src/services/cleanup.service');
-  const { validateMagicBytes, detectFormat } = require('./backend/src/utils/magicBytes');
+  const PORT = process.env.PORT || 5000;
+  const photoService = require('./src/services/photo.service');
+  const cleanupService = require('./src/services/cleanup.service');
+  const { validateMagicBytes, detectFormat } = require('./src/utils/magicBytes');
 
   // Start 24h auto cleanup
   cleanupService.startAutoCleanup(60 * 60 * 1000);
@@ -40,20 +40,21 @@ function startNativeServer() {
     '.jpg': 'image/jpeg',
     '.jpeg': 'image/jpeg',
     '.gif': 'image/gif',
-    '.webp': 'image/webp',
     '.svg': 'image/svg+xml',
     '.ico': 'image/x-icon',
     '.mp3': 'audio/mpeg',
     '.wav': 'audio/wav'
   };
 
+  const PUBLIC_DIR = path.join(__dirname, '../frontend/public');
+
   const server = http.createServer(async (req, res) => {
-    // Security Headers (Helmet equivalents)
+    // Security Headers
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'SAMEORIGIN');
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Session-ID');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Session-ID, X-Admin-Key');
 
     if (req.method === 'OPTIONS') {
       res.writeHead(204);
@@ -79,7 +80,7 @@ function startNativeServer() {
       return res.end(JSON.stringify({
         success: true,
         appName: 'BUỒNG CHỤP ẢNH — 35MM ANALOG KIOSK',
-        version: '2.0.0',
+        version: '2.5.0',
         maxUploadPayloadMB: 35,
         sessionRetentionHours: 24,
         features: {
@@ -97,31 +98,53 @@ function startNativeServer() {
       return res.end(JSON.stringify({
         success: true,
         sessionId,
-        expiresInMs: 24 * 60 * 60 * 1000,
-        message: 'Phiên làm việc đã được khởi tạo thành công.'
+        kioskId: 'KIOSK_ZUMPPI_01',
+        createdAt: Date.now()
       }));
     }
 
     if (pathname === '/api/v1/photos/archive' && req.method === 'POST') {
       let body = '';
-      req.on('data', chunk => { body += chunk; });
+      req.on('data', chunk => {
+        body += chunk;
+        if (body.length > 50 * 1024 * 1024) {
+          res.writeHead(413, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'File ảnh quá lớn (>50MB)' }));
+          req.destroy();
+        }
+      });
+
       req.on('end', async () => {
         try {
-          const payload = JSON.parse(body || '{}');
-          const sessionId = payload.sessionId || req.headers['x-session-id'] || 'session_' + Date.now();
-          const dataUrl = payload.dataUrl;
+          const payload = JSON.parse(body);
+          const sessionId = req.headers['x-session-id'] || payload.sessionId;
+          const { dataUrl, filename, caption } = payload;
 
-          if (!dataUrl) {
+          if (!sessionId || !dataUrl) {
             res.writeHead(400, { 'Content-Type': 'application/json' });
-            return res.end(JSON.stringify({ success: false, error: 'Thiếu dữ liệu dataUrl' }));
+            return res.end(JSON.stringify({ success: false, error: 'Thiếu dữ liệu sessionId hoặc dataUrl' }));
           }
 
-          const saved = await photoService.savePhoto(sessionId, dataUrl, 'png', payload.caption || '');
+          const base64Data = dataUrl.replace(/^data:image\/\w+;base64,/, '');
+          const buffer = Buffer.from(base64Data, 'base64');
+          const ext = (filename && path.extname(filename).replace('.', '')) || 'png';
+
+          if (!validateMagicBytes(buffer, ext)) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            return res.end(JSON.stringify({ success: false, error: 'Tệp tin không đúng định dạng ảnh (Magic Bytes verification failed)' }));
+          }
+
+          const saved = await photoService.savePhoto(sessionId, dataUrl, ext, caption);
           res.writeHead(200, { 'Content-Type': 'application/json' });
-          return res.end(JSON.stringify({ success: true, photo: saved }));
-        } catch (err) {
-          res.writeHead(400, { 'Content-Type': 'application/json' });
-          return res.end(JSON.stringify({ success: false, error: err.message }));
+          return res.end(JSON.stringify({
+            success: true,
+            fileId: saved.fileId,
+            filename: saved.filename,
+            viewUrl: `/api/v1/photos/view/${saved.fileId}?sessionId=${sessionId}`
+          }));
+        } catch (e) {
+          res.writeHead(500, { 'Content-Type': 'application/json' });
+          return res.end(JSON.stringify({ success: false, error: e.message }));
         }
       });
       return;
@@ -148,12 +171,12 @@ function startNativeServer() {
       return fs.createReadStream(filePath).pipe(res);
     }
 
-    // --- STATIC ASSETS SERVING ---
+    // --- STATIC ASSETS SERVING FROM FRONTEND/PUBLIC ---
     let safePath = pathname === '/' ? '/selfbooth.html' : pathname;
-    let filePath = path.join(__dirname, safePath);
+    let filePath = path.join(PUBLIC_DIR, safePath);
 
     // Prevent directory traversal
-    if (!filePath.startsWith(__dirname)) {
+    if (!filePath.startsWith(PUBLIC_DIR)) {
       res.writeHead(403);
       return res.end('Forbidden');
     }

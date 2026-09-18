@@ -4,9 +4,11 @@
   "description": "Professional 35mm Analog Photobooth Kiosk Studio Engine with Secure Express.js Backend API",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js",
-    "backend": "node backend/server.js"
+    "start": "node backend/server-legacy.js",
+    "dev:backend": "cd backend && npm start",
+    "dev:frontend": "cd frontend && npm run dev",
+    "build:frontend": "cd frontend && npm run build",
+    "test": "node tests/unit/core.test.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
