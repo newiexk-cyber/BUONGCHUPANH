@@ -63,7 +63,8 @@ const config = {
     storageDir: path.join(__dirname, '../../storage'),
     photosDir: path.join(__dirname, '../../storage/photos'),
     templatesDir: path.join(__dirname, '../../storage/templates'),
-    dataDir: path.join(__dirname, '../../storage/data')
+    dataDir: path.join(__dirname, '../../storage/data'),
+    publicDir: path.join(__dirname, '../../../frontend/public')
   }
 };
 

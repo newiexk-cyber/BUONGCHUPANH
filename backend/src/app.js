@@ -5,6 +5,7 @@
 
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
 const config = require('./config');
 
 // Security & Session Middlewares
@@ -96,17 +97,19 @@ app.post('/api/save-photo', (req, res, next) => {
   photoController.savePhoto(req, res, next);
 });
 
-// 7. Host Static Frontend Assets (Web Client UI)
-app.use(express.static(config.paths.publicDir, {
-  maxAge: config.isProduction ? '1d' : 0,
-  etag: true,
-  // Prevent direct public browsing of storage folder
-  setHeaders: (res, filePath) => {
-    if (filePath.includes('storage') || filePath.includes('saved_photos')) {
-      res.setHeader('Cache-Control', 'no-store, private');
+// 7. Host Static Frontend Assets (Fallback if publicDir exists)
+if (config.paths.publicDir && fs.existsSync(config.paths.publicDir)) {
+  app.use(express.static(config.paths.publicDir, {
+    maxAge: config.isProduction ? '1d' : 0,
+    etag: true,
+    // Prevent direct public browsing of storage folder
+    setHeaders: (res, filePath) => {
+      if (filePath.includes('storage') || filePath.includes('saved_photos')) {
+        res.setHeader('Cache-Control', 'no-store, private');
+      }
     }
-  }
-}));
+  }));
+}
 
 // 8. Not Found & Global Error Handling
 app.use(notFoundHandler);
