@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # ==============================================================================
   # BACKEND API (EXPRESS.JS 3-TIER ARCHITECTURE)
