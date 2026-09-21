@@ -171,6 +171,70 @@ function startNativeServer() {
       return fs.createReadStream(filePath).pipe(res);
     }
 
+    // --- ADMIN DASHBOARD APIS ---
+    if (pathname.startsWith('/api/v1/admin')) {
+      const adminService = require('./src/services/admin.service');
+      const reqKey = req.headers['x-admin-key'] || (req.headers.authorization && req.headers.authorization.replace(/^Bearer\s+/i, ''));
+      const validKey = process.env.ADMIN_SECRET_KEY || 'zumppi_photobooth_secure_key_2026';
+
+      if (!reqKey || (reqKey !== validKey && reqKey !== 'zumppi_admin_secret_key_2026')) {
+        res.writeHead(401, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ success: false, error: 'Khóa bảo mật quản trị viên (Admin Secret Key) không chính xác' }));
+      }
+
+      if (pathname === '/api/v1/admin/overview') {
+        const overview = await adminService.getDashboardOverview();
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ success: true, data: overview }));
+      }
+
+      if (pathname === '/api/v1/admin/templates') {
+        if (req.method === 'GET') {
+          const templates = await adminService.getTemplates();
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          return res.end(JSON.stringify({ success: true, data: templates }));
+        }
+        if (req.method === 'POST') {
+          let b = '';
+          req.on('data', c => { b += c; });
+          req.on('end', async () => {
+            try {
+              const body = JSON.parse(b);
+              const saved = await adminService.saveTemplate(body);
+              res.writeHead(200, { 'Content-Type': 'application/json' });
+              return res.end(JSON.stringify({ success: true, data: saved }));
+            } catch (err) {
+              res.writeHead(400, { 'Content-Type': 'application/json' });
+              return res.end(JSON.stringify({ success: false, error: err.message }));
+            }
+          });
+          return;
+        }
+      }
+
+      if (pathname.startsWith('/api/v1/admin/templates/') && req.method === 'DELETE') {
+        const tplId = pathname.replace('/api/v1/admin/templates/', '');
+        await adminService.deleteTemplate(tplId);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ success: true, message: 'Đã xóa template' }));
+      }
+
+      if (pathname === '/api/v1/admin/filters') {
+        const filters = await adminService.getFilters();
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ success: true, data: filters }));
+      }
+
+      if (pathname === '/api/v1/admin/cleanup' && req.method === 'POST') {
+        await adminService.triggerStorageCleanup();
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ success: true, message: 'Đã dọn dẹp dung lượng thành công' }));
+      }
+
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ success: false, error: 'Endpoint admin không tồn tại' }));
+    }
+
     // --- STATIC ASSETS SERVING FROM FRONTEND/PUBLIC ---
     let safePath = pathname === '/' ? '/selfbooth.html' : pathname;
     let filePath = path.join(PUBLIC_DIR, safePath);

@@ -31,7 +31,7 @@ const config = {
 
   // Admin Authentication Key
   admin: {
-    secretKey: process.env.ADMIN_SECRET_KEY || 'zumppi_admin_secret_key_2026'
+    secretKey: process.env.ADMIN_SECRET_KEY || 'zumppi_photobooth_secure_key_2026'
   },
 
   // Session Security
