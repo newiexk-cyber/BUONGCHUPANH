@@ -330,20 +330,30 @@ export default function StudioPage() {
     setPhase('RESULT');
   };
 
-  // Thermal Printing
+  // Photo & Thermal Printing (Epson L805 / DNP / Canon)
   const handlePrint = () => {
     setShowPrintModal(false);
     if (!printStageRef.current || !resultPng) return;
 
     printStageRef.current.innerHTML = printFormat === 'dual-2x6'
-      ? `<div style="display:flex;width:100mm;height:150mm;">
-           <img src="${resultPng}" style="width:50mm;height:150mm;object-fit:contain;"/>
-           <img src="${resultPng}" style="width:50mm;height:150mm;object-fit:contain;"/>
+      ? `<div style="display:flex;width:100mm;height:150mm;position:relative;background:#ffffff;overflow:hidden;">
+           <div style="width:50mm;height:150mm;overflow:hidden;display:flex;justify-content:center;align-items:center;">
+             <img src="${resultPng}" style="width:50mm;height:150mm;object-fit:contain;display:block;"/>
+           </div>
+           <div style="width:50mm;height:150mm;overflow:hidden;display:flex;justify-content:center;align-items:center;">
+             <img src="${resultPng}" style="width:50mm;height:150mm;object-fit:contain;display:block;"/>
+           </div>
+           <div class="cutting-guide-line"></div>
          </div>`
-      : `<img src="${resultPng}" style="width:100mm;height:150mm;object-fit:contain;"/>`;
+      : `<div style="width:100mm;height:150mm;background:#ffffff;display:flex;justify-content:center;align-items:center;overflow:hidden;">
+           <img src="${resultPng}" style="width:100mm;height:150mm;object-fit:contain;display:block;"/>
+         </div>`;
 
-    window.print();
+    setTimeout(() => {
+      window.print();
+    }, 150);
   };
+
 
   const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
@@ -836,10 +846,10 @@ export default function StudioPage() {
             width: '100%'
           }}>
             <h3 style={{ fontSize: '1.2rem', fontWeight: 800, marginBottom: '14px' }}>
-              🖨️ Chọn Khổ In Máy In Nhiệt
+              🖨️ Chọn Khổ In Ảnh (Epson L805 / DNP / Canon)
             </h3>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '16px' }}>
               <label style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -858,7 +868,9 @@ export default function StudioPage() {
                 />
                 <div>
                   <div style={{ fontWeight: 800, fontSize: '0.88rem' }}>Khổ Đôi 2 Dải 2x6 inch (Cắt đôi)</div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Chuẩn máy in DNP/Canon 4x6" chia 2 dải film 5x15cm.</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                    In trên 1 tờ giấy 10x15cm (4x6"), tự động có vạch chỉ cắt đôi ở giữa.
+                  </div>
                 </div>
               </label>
 
@@ -880,10 +892,26 @@ export default function StudioPage() {
                 />
                 <div>
                   <div style={{ fontWeight: 800, fontSize: '0.88rem' }}>Khổ Bưu Thiếp 4x6 inch (10x15 cm)</div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>In trọn vẹn 1 tấm bưu thiếp ảnh lớn 300 DPI.</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                    In tràn lề trọn vẹn 1 tấm ảnh bưu thiếp chất lượng 300 DPI.
+                  </div>
                 </div>
               </label>
             </div>
+
+            <div style={{
+              background: 'rgba(245, 158, 11, 0.08)',
+              border: '1px solid rgba(245, 158, 11, 0.2)',
+              borderRadius: '10px',
+              padding: '10px 14px',
+              fontSize: '0.75rem',
+              color: 'var(--accent-gold)',
+              lineHeight: 1.5,
+              marginBottom: '20px'
+            }}>
+              💡 <strong>Mẹo in Epson L805 nét nhất:</strong> Chọn loại giấy <em>Epson Premium Glossy</em>, chất lượng <em>High</em>, bật <em>Borderless</em> (In tràn lề) và tích chọn <em>Background graphics</em> trong hộp thoại in.
+            </div>
+
 
             <div style={{ display: 'flex', gap: '10px' }}>
               <button onClick={handlePrint} className="btn-primary" style={{ flex: 1 }}>

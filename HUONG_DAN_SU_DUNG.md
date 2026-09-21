@@ -259,6 +259,44 @@ NEXT_PUBLIC_API_URL=http://localhost:5000/api/v1
 
 ---
 
+## 9. HƯỚNG DẪN CẤU HÌNH MÁY IN EPSON L805 / L8050 ĐỂ IN MÀU SẮC NÉT & CHUẨN NHẤT
+
+Máy in **Epson L805 (hoặc L8050)** là dòng máy in phun 6 màu chuyên dụng cho in ảnh lab và photobooth. Hệ thống Web App đã được cấu hình tương thích 100% với khổ in chuẩn **4x6 inch (10x15 cm)** và xuất ảnh ở mật độ **300 - 400 DPI**.
+
+Để bản in đạt chất lượng sắc nét, chuẩn màu da và rực rỡ nhất, hãy làm theo các bước cấu hình sau:
+
+### 9.1. Cài Đặt Trong Windows Driver Của Epson L805
+Vào **Windows Settings** ➔ **Printers & Scanners** ➔ Chọn **Epson L805 Series** ➔ **Printing Preferences**:
+1. **Document Size (Khổ giấy)**: Chọn `10 x 15 cm (4 x 6 in)`.
+2. **Borderless (In tràn lề)**: **TÍCH CHỌN BẮT BUỘC** (để ảnh in kín 100% giấy, không bị viền trắng thừa).
+3. **Paper Type (Loại giấy)**:
+   - Chọn **`Epson Premium Glossy`** hoặc **`Epson Ultra Glossy`** (khi dùng giấy in ảnh bóng RC).
+   - ⚠️ *Cảnh báo:* Tuyệt đối **KHÔNG** chọn `Plain Paper` (giấy thường) vì máy sẽ phun ít mực khiến màu sắc bị nhợt nhạt và xỉn màu.
+4. **Quality (Chất lượng)**: Chọn **`High`** (hoặc `Photo RPM - Max DPI` để có độ phân giải tối đa 5760 x 1440 DPI).
+5. **Color Correction (Chỉnh màu)**:
+   - Vào tab **More Options** ➔ Mục *Color Correction* chọn **`Custom`** ➔ Bấm **Advanced...**
+   - Chọn **`Color Controls`** ➔ Chế độ màu: **`Adobe RGB`**, Gamma: **`2.2`**.
+   - *(Nếu bạn có file ICC Profile riêng cho loại mực đang dùng, chọn `ICM` ➔ nạp file Profile để đạt độ chuẩn màu 100%).*
+
+### 9.2. Cài Đặt Trên Trình Duyệt Khi Bấm In (Chrome / Edge)
+Khi bấm nút "XÁC NHẬN IN" trên giao diện Kiosk:
+1. **Destination**: Chọn máy in `EPSON L805 Series`.
+2. **Pages per sheet**: `1`.
+3. **Margins (Căn lề)**: Chọn **`None`** (Không lề).
+4. **Scale (Tỷ lệ)**: Chọn **`100%`** hoặc **`Fit to printable area`**.
+5. **Options**: Tích chọn bắt buộc **`Background graphics` (Đồ họa nền)** để giữ trọn màu khung và filter ảnh.
+
+### 9.3. Thiết Lập In Tự Động Kiosk (Silent Print Không Cần Bấm Hộp Thoại)
+Để khách bấm "IN" là máy Epson L805 tự động kéo giấy in ra mà không hiển thị hộp thoại in của Windows:
+1. Đặt Epson L805 làm **Default Printer** trong Windows.
+2. Tạo lối tắt chạy Chrome ở chế độ Kiosk Silent:
+   ```cmd
+   chrome.exe --kiosk --kiosk-printing --app="http://localhost:3000/studio"
+   ```
+
+---
+
 ## 📜 THÔNG TIN PHÁT TRIỂN & BẢN QUYỀN
 Hệ thống được phát triển theo tiêu chuẩn Enterprise Photobooth Software — **Zump.pi Production**.
 Mọi thắc mắc kỹ thuật vui lòng kiểm tra tài liệu kiến trúc tại thư mục [`docs/`](file:///c:/memay/online-photobooth/docs/) hoặc chạy bộ kiểm thử tự động.
+
