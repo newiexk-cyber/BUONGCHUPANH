@@ -168,6 +168,21 @@ export default function StudioPage() {
     render();
   };
 
+  // Wireless Remote Clicker & Keyboard Spacebar Trigger
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target?.tagName)) return;
+      if (e.code === 'Space' || e.key === ' ' || e.code === 'Enter') {
+        e.preventDefault();
+        if (phase === 'SETUP' || phase === 'REVIEW') {
+          handleStartShooting();
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [phase, timerSec, selectedFilter, isMirror, cameraActive]);
+
   // 2. Capture Flow (8 Sequential Shots)
   const handleStartShooting = async () => {
     setPhase('SHOOTING');
@@ -809,9 +824,13 @@ export default function StudioPage() {
             🪞 {isMirror ? 'Lật Gương: BẬT' : 'Lật Gương: TẮT'}
           </button>
 
-          <button onClick={handleStartShooting} className="shutter-btn-main">
+          <button 
+            onClick={handleStartShooting} 
+            className="shutter-btn-main"
+            title="Bấm nút trên màn hình hoặc nhấn phím Space / Remote cầm tay để chụp"
+          >
             <span className="rec-blinker"></span>
-            <span>BẮT ĐẦU CHỤP (8 TẤM)</span>
+            <span>BẮT ĐẦU CHỤP (SPACE / REMOTE)</span>
           </button>
 
           <button 
