@@ -70,6 +70,19 @@ services:
     networks:
       - photobooth-net
 
+  # ==============================================================================
+  # CLOUDFLARE TUNNEL (ONLINE INTERNET CHO ĐIỆN THOẠI 4G QUÉT QR)
+  # ==============================================================================
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: photobooth_tunnel
+    restart: unless-stopped
+    command: tunnel --no-autoupdate --url http://nginx:80
+    depends_on:
+      - nginx
+    networks:
+      - photobooth-net
+
 networks:
   photobooth-net:
     driver: bridge

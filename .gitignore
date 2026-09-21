@@ -31,3 +31,5 @@ frontend/.next/
 frontend/.env.local
 frontend/.env.*.local
 frontend/node_modules/
+cloudflared.exe
+config.yml
