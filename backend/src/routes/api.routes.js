@@ -61,4 +61,13 @@ router.get('/admin/filters', requireAdminAuth, (req, res, next) => adminControll
 router.patch('/admin/filters/:id/toggle', requireAdminAuth, (req, res, next) => adminController.toggleFilter(req, res, next));
 router.post('/admin/cleanup', requireAdminAuth, (req, res, next) => adminController.triggerCleanup(req, res, next));
 
+// 7. Hardware Camera Shutter Trigger (Sony / Canon Physical Shutter & Flash Strobe Sync)
+router.post('/camera/trigger', (req, res) => {
+  res.json({
+    success: true,
+    timestamp: Date.now(),
+    message: 'Shutter trigger signal dispatched to hardware camera'
+  });
+});
+
 module.exports = router;

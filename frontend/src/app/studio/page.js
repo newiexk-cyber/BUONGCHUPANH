@@ -32,6 +32,7 @@ export default function StudioPage() {
   const [qrUrl, setQrUrl] = useState('');
   const [showPrintModal, setShowPrintModal] = useState(false);
   const [printFormat, setPrintFormat] = useState('dual-2x6');
+  const [flashTriggerEnabled, setFlashTriggerEnabled] = useState(true);
 
   // DOM Refs
   const videoRef = useRef(null);
@@ -183,6 +184,17 @@ export default function StudioPage() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [phase, timerSec, selectedFilter, isMirror, cameraActive]);
 
+  // Hardware Camera Physical Shutter & Flash Trigger
+  const triggerHardwareShutter = () => {
+    if (!flashTriggerEnabled) return;
+    try {
+      // Gửi tín hiệu kích chụp tới digiCamControl / Local Camera Bridge HTTP
+      fetch('http://127.0.0.1:5513/?CMD=Capture', { mode: 'no-cors' }).catch(() => {});
+      // Gửi tín hiệu kích chụp tới Backend Bridge
+      api.triggerCameraHardware().catch(() => {});
+    } catch (e) {}
+  };
+
   // 2. Capture Flow (8 Sequential Shots)
   const handleStartShooting = async () => {
     setPhase('SHOOTING');
@@ -199,8 +211,9 @@ export default function StudioPage() {
       }
       setCountdown(null);
 
-      // Flash
+      // Flash & Trigger Hardware Shutter / Strobe Flash
       setFlashing(true);
+      triggerHardwareShutter();
       setTimeout(() => setFlashing(false), 200);
 
       // Capture frame
@@ -272,6 +285,7 @@ export default function StudioPage() {
     setCountdown(null);
 
     setFlashing(true);
+    triggerHardwareShutter();
     setTimeout(() => setFlashing(false), 200);
 
     const newShot = captureFrameFromVideo();
@@ -402,6 +416,21 @@ export default function StudioPage() {
             ))}
             {videoDevices.length === 0 && <option value="">✨ Demo Studio Live</option>}
           </select>
+
+          {/* Flash Strobe / Trigger Toggle */}
+          <button
+            onClick={() => setFlashTriggerEnabled(!flashTriggerEnabled)}
+            className="btn-ghost"
+            style={{
+              fontSize: '0.78rem',
+              padding: '6px 12px',
+              color: flashTriggerEnabled ? 'var(--accent-gold)' : 'var(--text-secondary)',
+              borderColor: flashTriggerEnabled ? 'rgba(245, 158, 11, 0.4)' : 'var(--border-subtle)'
+            }}
+            title="Kích hoạt màn trập cơ học Sony A74 & Cục phát sóng Flash Trigger Studio"
+          >
+            ⚡ Flash Trigger: {flashTriggerEnabled ? 'BẬT' : 'TẮT'}
+          </button>
 
           <Link href="/admin" className="btn-ghost" style={{ fontSize: '0.78rem', padding: '6px 12px' }}>
             ⚙️ Admin

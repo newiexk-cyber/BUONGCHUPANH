@@ -91,6 +91,12 @@ class ApiClient {
     });
   }
 
+  async triggerCameraHardware() {
+    return this.request('/camera/trigger', {
+      method: 'POST'
+    }).catch(() => ({}));
+  }
+
   // --- ADMIN METHODS (PROTECTED BY ADMIN SECRET KEY) ---
 
   async adminGetOverview(adminKey) {
