@@ -76,6 +76,7 @@ export default function StudioPage() {
   const videoRef = useRef(null);
   const demoCanvasRef = useRef(null);
   const exportCanvasRef = useRef(null);
+  const previewCanvasRef = useRef(null);
   const printStageRef = useRef(null);
 
   // 1. Initialize Filters, Templates & Cameras on Mount
@@ -339,12 +340,11 @@ export default function StudioPage() {
     setPhase('REVIEW');
   };
 
-  // 3. Develop & Render 300 DPI Film Strip
-  const handleDevelopFilm = async () => {
-    setPhase('DEVELOPING');
-    await sleep(1200);
+  // 3. Render Live Preview & Develop
+  const renderLivePreview = async () => {
+    const canvas = previewCanvasRef.current;
+    if (!canvas || shots.length === 0) return;
 
-    const canvas = exportCanvasRef.current || document.createElement('canvas');
     const isDarkFrame = !['#f6f5f0', '#fce7f3'].includes(frameColor);
     const subTextColor = isDarkFrame ? 'rgba(255,255,255,0.6)' : 'rgba(24,24,27,0.6)';
     const accentColor = isDarkFrame ? '#f59e0b' : '#b45309';
@@ -367,16 +367,16 @@ export default function StudioPage() {
     ctx.fillStyle = frameColor;
     ctx.fillRect(0, 0, w, h);
 
-    // 2. Determine title & badge according to selectedTemplate
+    // 2. Determine title according to selectedTemplate
     const currentTpl = templates.find(t => t.id === selectedTemplate) || { name: 'Zump.pi Noir Signature' };
     const titleText = currentTpl.id === 'tpl_birthday' ? '🎂 HAPPY BIRTHDAY • PARTY'
       : currentTpl.id === 'tpl_y2k' ? '✨ Y2K CYBER ANGEL'
       : currentTpl.id === 'tpl_sweet' ? '💐 SWEET BOTANICAL'
       : 'ZUMP.PI STUDIO • 35MM ARCHIVE';
 
-    // 3. Render Header
+    // 3. Render Header with Be Vietnam Pro font
     ctx.fillStyle = accentColor;
-    ctx.font = '700 24px "JetBrains Mono", monospace';
+    ctx.font = '700 24px "Be Vietnam Pro", sans-serif';
     ctx.fillText(titleText, 60, 80);
 
     // 4. Render Shots based on layout
@@ -392,6 +392,7 @@ export default function StudioPage() {
 
       for (let i = 0; i < Math.min(activeShots.length, 4); i++) {
         const shotUrl = activeShots[i];
+        if (!shotUrl) continue;
         const img = new Image();
         await new Promise(r => { img.onload = r; img.src = shotUrl; });
         ctx.drawImage(img, positions[i].x, positions[i].y, size, size);
@@ -400,10 +401,9 @@ export default function StudioPage() {
         ctx.strokeRect(positions[i].x, positions[i].y, size, size);
       }
 
-      // Date stamp
       ctx.fillStyle = subTextColor;
-      ctx.font = '600 20px "JetBrains Mono", monospace';
-      ctx.fillText(`DATE: ${new Date().toISOString().slice(0, 10)} • 4K 300 DPI`, 80, 1550);
+      ctx.font = '600 20px "Be Vietnam Pro", sans-serif';
+      ctx.fillText(`NGÀY: ${new Date().toISOString().slice(0, 10)} • 4K 300 DPI`, 80, 1550);
     } else {
       const slotCount = layout === 'strip-2' ? 2 : (layout === 'strip-3' ? 3 : 4);
       const activeShots = shots.slice(0, slotCount);
@@ -413,6 +413,7 @@ export default function StudioPage() {
       const gapY = layout === 'strip-2' ? 40 : 28;
 
       for (const shotUrl of activeShots) {
+        if (!shotUrl) continue;
         const img = new Image();
         await new Promise(r => { img.onload = r; img.src = shotUrl; });
         ctx.drawImage(img, 60, topY, itemW, itemH);
@@ -424,12 +425,25 @@ export default function StudioPage() {
         topY += itemH + gapY;
       }
 
-      // Date & footer stamp
       ctx.fillStyle = subTextColor;
-      ctx.font = '600 20px "JetBrains Mono", monospace';
-      ctx.fillText(`DATE: ${new Date().toISOString().slice(0, 10)} • 35MM FILM`, 60, h - 60);
+      ctx.font = '600 20px "Be Vietnam Pro", sans-serif';
+      ctx.fillText(`NGÀY: ${new Date().toISOString().slice(0, 10)} • 35MM FILM`, 60, h - 60);
     }
+  };
 
+  useEffect(() => {
+    if (phase === 'REVIEW') {
+      renderLivePreview();
+    }
+  }, [phase, shots, layout, frameColor, selectedTemplate]);
+
+  // 3. Confirm Print & Develop Final PNG
+  const handleDevelopFilm = async () => {
+    setPhase('DEVELOPING');
+    await sleep(600);
+
+    const canvas = previewCanvasRef.current;
+    if (!canvas) return;
     const finalPng = canvas.toDataURL('image/png');
     setResultPng(finalPng);
 
@@ -551,97 +565,143 @@ export default function StudioPage() {
           flexDirection: 'column',
           boxShadow: '0 20px 50px rgba(0,0,0,0.6)'
         }}>
-          <div style={{
-            position: 'relative',
-            width: '100%',
-            aspectRatio: '4 / 3',
-            background: '#0a0a0a',
-            overflow: 'hidden',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
-            <video 
-              ref={videoRef} 
-              autoPlay 
-              playsInline 
-              muted 
-              style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-                transform: isMirror ? 'scaleX(-1)' : 'none',
-                filter: getFilterCSS(selectedFilter),
-                display: cameraActive ? 'block' : 'none',
-                transition: 'filter 0.3s ease'
-              }}
-            />
-            <canvas 
-              ref={demoCanvasRef} 
-              style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-                filter: getFilterCSS(selectedFilter),
-                display: !cameraActive ? 'block' : 'none',
-                transition: 'filter 0.3s ease'
-              }}
-            />
-
-            {/* Viewfinder Telemetry */}
+          {phase === 'REVIEW' ? (
             <div style={{
-              position: 'absolute',
-              bottom: '12px',
-              left: '16px',
-              right: '16px',
+              position: 'relative',
+              width: '100%',
+              minHeight: '620px',
+              background: '#09090b',
               display: 'flex',
-              justifyContent: 'space-between',
-              fontFamily: 'var(--font-mono)',
-              fontSize: '0.7rem',
-              color: 'rgba(255,255,255,0.7)',
-              zIndex: 20
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '24px 20px',
+              overflow: 'hidden'
             }}>
-              <span>RAW • 35MM</span>
-              <span>ISO 400 • F/2.8 • 1/125S</span>
-              <span>4K • 300 DPI</span>
-            </div>
-
-            {/* Countdown Overlay */}
-            {countdown !== null && (
               <div style={{
                 position: 'absolute',
-                inset: 0,
-                background: 'rgba(10, 10, 10, 0.65)',
-                backdropFilter: 'blur(8px)',
+                top: '16px',
+                left: '20px',
+                right: '20px',
                 display: 'flex',
-                flexDirection: 'column',
+                justifyContent: 'space-between',
                 alignItems: 'center',
-                justifyContent: 'center',
-                zIndex: 40
+                fontFamily: 'var(--font-sans)',
+                fontSize: '0.8rem',
+                fontWeight: 800,
+                color: 'var(--accent-gold)'
               }}>
-                <div style={{
-                  fontFamily: 'var(--font-editorial)',
-                  fontSize: '6.5rem',
-                  fontWeight: 900,
-                  color: '#ffffff',
-                  textShadow: '0 0 40px rgba(245, 158, 11, 0.6)'
-                }}>
-                  {countdown}
-                </div>
-                <div style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: '0.9rem',
-                  fontWeight: 700,
-                  color: 'var(--accent-gold)',
-                  letterSpacing: '0.15em',
-                  textTransform: 'uppercase',
-                  marginTop: '10px'
-                }}>
-                  TẤM {currentShotIndex} / 8
-                </div>
+                <span>🎞️ BẢN XEM TRƯỚC IN THẬT (REALTIME PREVIEW)</span>
+                <span style={{ color: 'var(--text-secondary)', fontSize: '0.74rem', fontWeight: 600 }}>
+                  {LAYOUT_OPTIONS.find(l => l.id === layout)?.label} • {FRAME_COLORS.find(c => c.hex === frameColor)?.label}
+                </span>
               </div>
-            )}
-          </div>
+              <canvas
+                ref={previewCanvasRef}
+                style={{
+                  maxHeight: '70vh',
+                  maxWidth: '100%',
+                  objectFit: 'contain',
+                  borderRadius: '10px',
+                  boxShadow: '0 25px 60px rgba(0,0,0,0.9)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  marginTop: '28px'
+                }}
+              />
+            </div>
+          ) : (
+            <div style={{
+              position: 'relative',
+              width: '100%',
+              aspectRatio: '4 / 3',
+              background: '#0a0a0a',
+              overflow: 'hidden',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <video 
+                ref={videoRef} 
+                autoPlay 
+                playsInline 
+                muted 
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  transform: isMirror ? 'scaleX(-1)' : 'none',
+                  filter: getFilterCSS(selectedFilter),
+                  display: cameraActive ? 'block' : 'none',
+                  transition: 'filter 0.3s ease'
+                }}
+              />
+              <canvas 
+                ref={demoCanvasRef} 
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  filter: getFilterCSS(selectedFilter),
+                  display: !cameraActive ? 'block' : 'none',
+                  transition: 'filter 0.3s ease'
+                }}
+              />
+
+              {/* Viewfinder Telemetry */}
+              <div style={{
+                position: 'absolute',
+                bottom: '12px',
+                left: '16px',
+                right: '16px',
+                display: 'flex',
+                justifyContent: 'space-between',
+                fontFamily: 'var(--font-sans)',
+                fontSize: '0.72rem',
+                color: 'rgba(255,255,255,0.7)',
+                zIndex: 20
+              }}>
+                <span>RAW • 35MM</span>
+                <span>ISO 400 • F/2.8 • 1/125S</span>
+                <span>4K • 300 DPI</span>
+              </div>
+
+              {/* Countdown Overlay */}
+              {countdown !== null && (
+                <div style={{
+                  position: 'absolute',
+                  inset: 0,
+                  background: 'rgba(10, 10, 10, 0.65)',
+                  backdropFilter: 'blur(8px)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  zIndex: 40
+                }}>
+                  <div style={{
+                    fontFamily: 'var(--font-editorial)',
+                    fontSize: '6.5rem',
+                    fontWeight: 900,
+                    color: '#ffffff',
+                    textShadow: '0 0 40px rgba(245, 158, 11, 0.6)'
+                  }}>
+                    {countdown}
+                  </div>
+                  <div style={{
+                    fontFamily: 'var(--font-sans)',
+                    fontSize: '0.9rem',
+                    fontWeight: 700,
+                    color: 'var(--accent-gold)',
+                    letterSpacing: '0.15em',
+                    textTransform: 'uppercase',
+                    marginTop: '10px'
+                  }}>
+                    TẤM {currentShotIndex} / 8
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* 8-Shot Film Rail */}
           <div style={{
@@ -763,16 +823,197 @@ export default function StudioPage() {
                 </div>
               </div>
 
+          {/* Phase: SETUP */}
+          {phase === 'SETUP' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <div style={{
+                background: '#18181b',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: '14px',
+                padding: '16px'
+              }}>
+                <div style={{
+                  fontFamily: 'var(--font-sans)',
+                  fontSize: '0.84rem',
+                  fontWeight: 800,
+                  color: 'var(--accent-gold)',
+                  letterSpacing: '0.04em'
+                }}>
+                  ✦ BUỒNG CHỤP TỰ ĐỘNG • CUỘN 8 TẤM
+                </div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '6px', lineHeight: 1.5 }}>
+                  Hệ thống tự động chụp liên hoàn 8 kiểu. Sau khi chụp xong, bạn sẽ được <strong>tự do chọn khung hình, đổi màu sắc và xem trước bản in</strong>!
+                </div>
+              </div>
+
+              {/* 1. Filter Pills */}
+              <div>
+                <label style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  fontSize: '0.8rem',
+                  fontFamily: 'var(--font-sans)',
+                  fontWeight: 700,
+                  color: 'var(--text-secondary)',
+                  marginBottom: '10px'
+                }}>
+                  <span>1. CHỌN BỘ LỌC MÀU PHIM</span>
+                  <span style={{ color: 'var(--accent-gold)' }}>{filters.length} MÀU</span>
+                </label>
+
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                  {filters.map(f => (
+                    <button
+                      key={f.id}
+                      onClick={() => setSelectedFilter(f.id)}
+                      style={{
+                        background: selectedFilter === f.id ? '#ffffff' : '#18181b',
+                        color: selectedFilter === f.id ? '#0a0a0a' : 'var(--text-secondary)',
+                        border: `1px solid ${selectedFilter === f.id ? '#ffffff' : 'var(--border-subtle)'}`,
+                        padding: '9px 16px',
+                        borderRadius: '9999px',
+                        fontSize: '0.8rem',
+                        fontWeight: selectedFilter === f.id ? 800 : 600,
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      {f.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 2. Timer Options */}
+              <div>
+                <label style={{
+                  display: 'block',
+                  fontSize: '0.8rem',
+                  fontFamily: 'var(--font-sans)',
+                  fontWeight: 700,
+                  color: 'var(--text-secondary)',
+                  marginBottom: '10px'
+                }}>
+                  2. HẸN GIỜ ĐẾM NGƯỢC
+                </label>
+
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  {[3, 5, 10].map(sec => (
+                    <button
+                      key={sec}
+                      onClick={() => setTimerSec(sec)}
+                      style={{
+                        flex: 1,
+                        background: timerSec === sec ? '#ffffff' : '#18181b',
+                        color: timerSec === sec ? '#0a0a0a' : 'var(--text-secondary)',
+                        border: `1px solid ${timerSec === sec ? '#ffffff' : 'var(--border-subtle)'}`,
+                        padding: '12px',
+                        borderRadius: '12px',
+                        fontSize: '0.84rem',
+                        fontWeight: 700,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      ⏱️ {sec} giây
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <button
+                onClick={handleStartShooting}
+                className="btn-primary"
+                style={{ width: '100%', padding: '16px', fontSize: '0.9rem', marginTop: '10px' }}
+              >
+                📸 BẮT ĐẦU CHỤP (8 TẤM)
+              </button>
+            </div>
+          )}
+
+          {/* Phase: REVIEW (Choose Frames, Layouts & Colors with Live Preview) */}
+          {phase === 'REVIEW' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+              <div>
+                <div style={{
+                  fontFamily: 'var(--font-sans)',
+                  fontSize: '0.78rem',
+                  fontWeight: 800,
+                  color: 'var(--accent-gold)'
+                }}>
+                  HOÀN THÀNH 8 KIỂU CHỤP
+                </div>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#ffffff', marginTop: '2px' }}>
+                  Chọn Khung & Bố Cục Bản In
+                </h3>
+                <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
+                  Bản xem trước ở cột trái sẽ cập nhật ngay khi bạn bấm chọn.
+                </p>
+              </div>
+
+              {/* 1. 8-Shot Thumbnails & Retake */}
+              <div>
+                <label style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  fontSize: '0.76rem',
+                  fontFamily: 'var(--font-sans)',
+                  fontWeight: 700,
+                  color: 'var(--text-secondary)',
+                  marginBottom: '8px'
+                }}>
+                  <span>1. ẢNH ĐÃ CHỤP (CHẠM ĐỂ CHỤP LẠI RIÊNG TẤM ĐÓ)</span>
+                </label>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
+                  {shots.map((shot, idx) => (
+                    <div
+                      key={idx}
+                      onClick={() => handleRetakeSingle(idx)}
+                      style={{
+                        position: 'relative',
+                        aspectRatio: '4 / 3',
+                        background: '#18181b',
+                        border: '1px solid var(--border-subtle)',
+                        borderRadius: '10px',
+                        overflow: 'hidden',
+                        cursor: 'pointer'
+                      }}
+                      title="Bấm để chụp lại tấm này"
+                    >
+                      <img src={shot} alt={`Shot ${idx + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <div style={{
+                        position: 'absolute',
+                        inset: 0,
+                        background: 'rgba(0,0,0,0.65)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'var(--accent-gold)',
+                        fontSize: '0.72rem',
+                        fontWeight: 800,
+                        opacity: 0,
+                        transition: 'opacity 0.2s'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
+                      onMouseLeave={(e) => e.currentTarget.style.opacity = '0'}
+                      >
+                        🔄 Chụp lại #{idx + 1}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               {/* 2. Layout Selection */}
               <div>
                 <label style={{
                   display: 'flex',
                   justifyContent: 'space-between',
-                  fontSize: '0.75rem',
-                  fontFamily: 'var(--font-mono)',
+                  fontSize: '0.76rem',
+                  fontFamily: 'var(--font-sans)',
                   fontWeight: 700,
                   color: 'var(--text-secondary)',
-                  marginBottom: '10px'
+                  marginBottom: '8px'
                 }}>
                   <span>2. BỐ CỤC KHUNG HÌNH</span>
                   <span style={{ color: 'var(--accent-gold)' }}>{LAYOUT_OPTIONS.find(l => l.id === layout)?.label}</span>
@@ -801,16 +1042,16 @@ export default function StudioPage() {
                 </div>
               </div>
 
-              {/* 3. Frame Background Theme */}
+              {/* 3. Frame Color */}
               <div>
                 <label style={{
                   display: 'flex',
                   justifyContent: 'space-between',
-                  fontSize: '0.75rem',
-                  fontFamily: 'var(--font-mono)',
+                  fontSize: '0.76rem',
+                  fontFamily: 'var(--font-sans)',
                   fontWeight: 700,
                   color: 'var(--text-secondary)',
-                  marginBottom: '10px'
+                  marginBottom: '8px'
                 }}>
                   <span>3. MÀU NỀN KHUNG</span>
                   <span style={{ color: 'var(--accent-gold)' }}>{FRAME_COLORS.find(c => c.hex === frameColor)?.label}</span>
@@ -827,10 +1068,10 @@ export default function StudioPage() {
                         gap: '6px',
                         background: frameColor === color.hex ? 'rgba(255,255,255,0.1)' : '#18181b',
                         border: `1.5px solid ${frameColor === color.hex ? 'var(--accent-gold)' : 'var(--border-subtle)'}`,
-                        padding: '6px 12px',
+                        padding: '7px 14px',
                         borderRadius: '9999px',
                         color: '#ffffff',
-                        fontSize: '0.76rem',
+                        fontSize: '0.78rem',
                         fontWeight: frameColor === color.hex ? 800 : 500,
                         cursor: 'pointer',
                         transition: 'all 0.15s ease'
@@ -855,11 +1096,11 @@ export default function StudioPage() {
                 <label style={{
                   display: 'flex',
                   justifyContent: 'space-between',
-                  fontSize: '0.75rem',
-                  fontFamily: 'var(--font-mono)',
+                  fontSize: '0.76rem',
+                  fontFamily: 'var(--font-sans)',
                   fontWeight: 700,
                   color: 'var(--text-secondary)',
-                  marginBottom: '10px'
+                  marginBottom: '8px'
                 }}>
                   <span>4. MẪU KHUNG TEMPLATE</span>
                   <span style={{ color: 'var(--accent-gold)' }}>{templates.find(t => t.id === selectedTemplate)?.name}</span>
@@ -888,101 +1129,17 @@ export default function StudioPage() {
                 </div>
               </div>
 
-              {/* 5. Timer Options */}
-              <div>
-                <label style={{
-                  display: 'block',
-                  fontSize: '0.75rem',
-                  fontFamily: 'var(--font-mono)',
-                  fontWeight: 700,
-                  color: 'var(--text-secondary)',
-                  marginBottom: '10px'
-                }}>
-                  5. HẸN GIỜ ĐẾM NGƯỢC
-                </label>
-
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  {[3, 5, 10].map(sec => (
-                    <button
-                      key={sec}
-                      onClick={() => setTimerSec(sec)}
-                      style={{
-                        flex: 1,
-                        background: timerSec === sec ? '#ffffff' : '#18181b',
-                        color: timerSec === sec ? '#0a0a0a' : 'var(--text-secondary)',
-                        border: `1px solid ${timerSec === sec ? '#ffffff' : 'var(--border-subtle)'}`,
-                        padding: '10px',
-                        borderRadius: '12px',
-                        fontSize: '0.82rem',
-                        fontWeight: 700,
-                        cursor: 'pointer'
-                      }}
-                    >
-                      ⏱️ {sec} giây
-                    </button>
-                  ))}
-                </div>
+              {/* Actions */}
+              <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                <button onClick={() => setPhase('SETUP')} className="btn-ghost" style={{ flex: 1, padding: '14px' }}>
+                  ‹ Chụp lại từ đầu
+                </button>
+                <button onClick={handleDevelopFilm} className="btn-primary" style={{ flex: 1.6, padding: '14px', fontSize: '0.88rem' }}>
+                  🖨️ XÁC NHẬN IN & TẠO QR →
+                </button>
               </div>
             </div>
           )}
-
-          {/* Phase: REVIEW (8 Shots & Single Retake) */}
-          {phase === 'REVIEW' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div>
-                <h3 style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '4px' }}>Xem Lại 8 Tấm Vừa Chụp</h3>
-                <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-                  Chạm vào ô nào chưa ưng ý để chụp lại riêng tấm đó.
-                </p>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
-                {shots.map((shot, idx) => (
-                  <div
-                    key={idx}
-                    onClick={() => handleRetakeSingle(idx)}
-                    style={{
-                      position: 'relative',
-                      aspectRatio: '4 / 3',
-                      background: '#18181b',
-                      border: '1px solid var(--border-subtle)',
-                      borderRadius: '10px',
-                      overflow: 'hidden',
-                      cursor: 'pointer'
-                    }}
-                    title="Bấm để chụp lại"
-                  >
-                    <img src={shot} alt={`Shot ${idx + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    <div style={{
-                      position: 'absolute',
-                      inset: 0,
-                      background: 'rgba(0,0,0,0.6)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: 'var(--accent-gold)',
-                      fontSize: '0.72rem',
-                      fontWeight: 800,
-                      opacity: 0,
-                      transition: 'opacity 0.2s'
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
-                    onMouseLeave={(e) => e.currentTarget.style.opacity = '0'}
-                    >
-                      📸 Chụp lại #{idx + 1}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-                <button onClick={() => setPhase('SETUP')} className="btn-ghost" style={{ flex: 1 }}>
-                  ‹ Chụp lại từ đầu
-                </button>
-                <button onClick={handleDevelopFilm} className="btn-primary" style={{ flex: 1.4 }}>
-                  TRÁNG PHIM & XUẤT ẢNH →
-                </button>
-              </div>
             </div>
           )}
 
