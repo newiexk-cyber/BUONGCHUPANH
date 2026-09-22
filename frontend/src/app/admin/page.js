@@ -72,9 +72,8 @@ export default function AdminDashboardPage() {
     ]);
 
     setOverview(overviewData.data);
-    setTemplates(templatesData.data || []);
-    setFilters(filtersData.data || []);
-    setIsAuthenticated(true);
+    setTemplates(templatesData.data?.list || templatesData.data || []);
+    setFilters(filtersData.data?.list || filtersData.data || []);
   };
 
   const handleTriggerCleanup = async () => {
@@ -109,7 +108,7 @@ export default function AdminDashboardPage() {
         frameColor: '#0a0a0a'
       });
       const res = await api.adminGetTemplates(adminKey);
-      setTemplates(res.data || []);
+      setTemplates(res.data?.list || res.data || []);
     } catch (err) {
       notify(err.message, 'error');
     } finally {
@@ -121,7 +120,7 @@ export default function AdminDashboardPage() {
     if (!confirm('Bạn có chắc muốn xóa khung mẫu này?')) return;
     try {
       await api.adminDeleteTemplate(id, adminKey);
-      notify('Đã xóa khung mẫu');
+      notify('Đã xóa khung mẫu thành công');
       setTemplates(prev => prev.filter(t => t.id !== id));
     } catch (err) {
       notify(err.message, 'error');
@@ -133,7 +132,7 @@ export default function AdminDashboardPage() {
       const newStatus = !currentStatus;
       await api.adminToggleFilter(filterId, newStatus, adminKey);
       setFilters(prev => prev.map(f => f.id === filterId ? { ...f, isActive: newStatus } : f));
-      notify(`Đã cập nhật trạng thái bộ lọc`);
+      notify(`Đã ${newStatus ? 'bật' : 'tắt'} bộ lọc thành công`);
     } catch (err) {
       notify(err.message, 'error');
     }
@@ -148,7 +147,7 @@ export default function AdminDashboardPage() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '20px',
+        padding: '24px',
         fontFamily: 'var(--font-sans)'
       }}>
         <div style={{
@@ -157,7 +156,7 @@ export default function AdminDashboardPage() {
           background: '#141416',
           border: '1px solid var(--border-subtle)',
           borderRadius: '20px',
-          padding: '36px 32px',
+          padding: '40px 32px',
           boxShadow: '0 24px 60px rgba(0,0,0,0.8)',
           position: 'relative',
           overflow: 'hidden'
@@ -196,7 +195,7 @@ export default function AdminDashboardPage() {
             </p>
           </div>
 
-          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
             <div>
               <label style={{
                 display: 'block',
@@ -223,7 +222,6 @@ export default function AdminDashboardPage() {
                   color: '#ffffff',
                   fontSize: '0.9rem',
                   outline: 'none',
-                  transition: 'border-color 0.2s ease',
                   fontFamily: 'inherit'
                 }}
                 required
@@ -265,8 +263,7 @@ export default function AdminDashboardPage() {
                 style={{ 
                   fontSize: '0.8rem', 
                   color: 'var(--text-dim)', 
-                  textDecoration: 'none',
-                  transition: 'color 0.15s ease'
+                  textDecoration: 'none'
                 }}
               >
                 ← Quay lại Kiosk Studio
@@ -280,47 +277,119 @@ export default function AdminDashboardPage() {
 
   // --- ADMIN DASHBOARD INTERFACE ---
   return (
-    <div className="min-h-screen bg-[#070708] text-white flex flex-col font-sans selection:bg-amber-500 selection:text-black">
+    <div style={{
+      minHeight: '100vh',
+      background: '#0a0a0a',
+      color: '#f4f4f5',
+      display: 'flex',
+      flexDirection: 'column',
+      fontFamily: 'var(--font-sans)'
+    }}>
       {/* Toast Notice */}
       {actionNotice && (
-        <div className={`fixed top-6 right-6 z-50 px-5 py-3 rounded-xl border text-xs font-mono shadow-2xl backdrop-blur-md animate-fade-in ${
-          actionNotice.type === 'error'
-            ? 'bg-red-950/80 border-red-500/50 text-red-300'
-            : 'bg-amber-950/80 border-amber-500/50 text-amber-300'
-        }`}>
+        <div style={{
+          position: 'fixed',
+          top: '24px',
+          right: '24px',
+          zIndex: 100,
+          padding: '14px 20px',
+          borderRadius: '14px',
+          border: actionNotice.type === 'error' ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid rgba(245, 158, 11, 0.4)',
+          background: actionNotice.type === 'error' ? 'rgba(30, 10, 10, 0.95)' : 'rgba(25, 20, 10, 0.95)',
+          color: actionNotice.type === 'error' ? '#f87171' : '#fbbf24',
+          fontSize: '0.84rem',
+          fontWeight: 700,
+          boxShadow: '0 20px 40px rgba(0,0,0,0.6)',
+          backdropFilter: 'blur(12px)'
+        }}>
           {actionNotice.msg}
         </div>
       )}
 
       {/* Top Header */}
-      <header className="border-b border-white/10 bg-[#0e0e10]/80 backdrop-blur-md sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link href="/studio" className="text-xs font-mono text-white/40 hover:text-white transition">
-              ← Studio
+      <header style={{
+        background: 'rgba(18, 18, 20, 0.9)',
+        backdropFilter: 'blur(20px)',
+        borderBottom: '1px solid var(--border-subtle)',
+        position: 'sticky',
+        top: 0,
+        zIndex: 40
+      }}>
+        <div style={{
+          maxWidth: '1280px',
+          margin: '0 auto',
+          padding: '0 24px',
+          height: '68px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <Link 
+              href="/studio" 
+              style={{
+                fontSize: '0.78rem',
+                fontWeight: 700,
+                color: 'var(--text-secondary)',
+                textDecoration: 'none',
+                background: '#18181b',
+                padding: '8px 14px',
+                borderRadius: '8px',
+                border: '1px solid var(--border-subtle)'
+              }}
+            >
+              ← Về Studio
             </Link>
-            <div className="h-4 w-px bg-white/10" />
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="font-bold text-sm tracking-wide">ZUMP.PI ADMIN DASHBOARD</span>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/5 text-white/40 border border-white/5">
-                v2.0 Enterprise
+            <div style={{ height: '18px', width: '1px', background: 'var(--border-subtle)' }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />
+              <span style={{ fontWeight: 800, fontSize: '0.95rem', letterSpacing: '0.02em' }}>
+                ZUMP.PI ADMIN DASHBOARD
+              </span>
+              <span style={{
+                fontSize: '0.68rem',
+                fontWeight: 700,
+                padding: '2px 8px',
+                borderRadius: '9999px',
+                background: 'rgba(245, 158, 11, 0.12)',
+                color: 'var(--accent-gold)',
+                border: '1px solid rgba(245, 158, 11, 0.3)'
+              }}>
+                v2.5 Kiosk Pro
               </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <button
               onClick={handleTriggerCleanup}
               disabled={loading}
-              className="px-3.5 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-xs font-mono text-amber-400 transition"
+              style={{
+                padding: '8px 16px',
+                background: '#18181b',
+                border: '1px solid rgba(245, 158, 11, 0.3)',
+                borderRadius: '10px',
+                color: 'var(--accent-gold)',
+                fontSize: '0.78rem',
+                fontWeight: 700,
+                cursor: 'pointer'
+              }}
               title="Dọn dẹp session và ảnh tạm đã lưu quá 24h"
             >
               🧹 Dọn Dẹp Dung Lượng
             </button>
             <button
               onClick={handleLogout}
-              className="px-3.5 py-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-lg text-xs font-mono text-red-400 transition"
+              style={{
+                padding: '8px 16px',
+                background: 'rgba(239, 68, 68, 0.1)',
+                border: '1px solid rgba(239, 68, 68, 0.25)',
+                borderRadius: '10px',
+                color: '#f87171',
+                fontSize: '0.78rem',
+                fontWeight: 700,
+                cursor: 'pointer'
+              }}
             >
               Đăng Xuất
             </button>
@@ -328,128 +397,211 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* Tab Navigation */}
-        <div className="max-w-7xl mx-auto px-6 flex gap-6 border-t border-white/5 text-xs font-mono">
+        <div style={{
+          maxWidth: '1280px',
+          margin: '0 auto',
+          padding: '0 24px',
+          display: 'flex',
+          gap: '24px',
+          borderTop: '1px solid rgba(255, 255, 255, 0.05)'
+        }}>
           <button
             onClick={() => setActiveTab('overview')}
-            className={`py-3 border-b-2 transition ${
-              activeTab === 'overview'
-                ? 'border-amber-500 text-amber-400 font-bold'
-                : 'border-transparent text-white/40 hover:text-white'
-            }`}
+            style={{
+              padding: '14px 4px',
+              border: 'none',
+              background: 'transparent',
+              borderBottom: activeTab === 'overview' ? '2px solid var(--accent-gold)' : '2px solid transparent',
+              color: activeTab === 'overview' ? 'var(--accent-gold)' : 'var(--text-secondary)',
+              fontWeight: activeTab === 'overview' ? 800 : 600,
+              fontSize: '0.84rem',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
           >
-            HỆ THỐNG & DUNG LƯỢNG
+            📊 HỆ THỐNG & DUNG LƯỢNG
           </button>
           <button
             onClick={() => setActiveTab('templates')}
-            className={`py-3 border-b-2 transition ${
-              activeTab === 'templates'
-                ? 'border-amber-500 text-amber-400 font-bold'
-                : 'border-transparent text-white/40 hover:text-white'
-            }`}
+            style={{
+              padding: '14px 4px',
+              border: 'none',
+              background: 'transparent',
+              borderBottom: activeTab === 'templates' ? '2px solid var(--accent-gold)' : '2px solid transparent',
+              color: activeTab === 'templates' ? 'var(--accent-gold)' : 'var(--text-secondary)',
+              fontWeight: activeTab === 'templates' ? 800 : 600,
+              fontSize: '0.84rem',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
           >
-            KHUNG MẪU TEMPLATE ({templates.length})
+            🖼️ KHUNG MẪU TEMPLATE ({templates.length})
           </button>
           <button
             onClick={() => setActiveTab('filters')}
-            className={`py-3 border-b-2 transition ${
-              activeTab === 'filters'
-                ? 'border-amber-500 text-amber-400 font-bold'
-                : 'border-transparent text-white/40 hover:text-white'
-            }`}
+            style={{
+              padding: '14px 4px',
+              border: 'none',
+              background: 'transparent',
+              borderBottom: activeTab === 'filters' ? '2px solid var(--accent-gold)' : '2px solid transparent',
+              color: activeTab === 'filters' ? 'var(--accent-gold)' : 'var(--text-secondary)',
+              fontWeight: activeTab === 'filters' ? 800 : 600,
+              fontSize: '0.84rem',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
           >
-            BỘ LỌC MÀU FILTER ({filters.length})
+            🎨 BỘ LỌC MÀU FILTER ({filters.length})
           </button>
         </div>
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl mx-auto w-full px-6 py-8">
+      <main style={{
+        flex: 1,
+        maxWidth: '1280px',
+        margin: '0 auto',
+        width: '100%',
+        padding: '32px 24px'
+      }}>
         {/* TAB 1: OVERVIEW & STORAGE METRICS */}
         {activeTab === 'overview' && overview && (
-          <div className="space-y-8 animate-fade-in">
-            {/* Metric KPI Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="bg-[#121215] border border-white/10 rounded-2xl p-5 relative overflow-hidden">
-                <span className="text-[10px] font-mono text-white/40 uppercase tracking-widest">Dung Lượng Ảnh Lưu Trữ</span>
-                <div className="text-3xl font-extrabold text-amber-400 mt-2 font-mono">
-                  {overview.storage?.storageUsedMB || '0.00'} <span className="text-sm font-normal text-white/40">MB</span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+            {/* Metric KPI Cards Grid */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+              gap: '18px'
+            }}>
+              {/* Card 1: Dung Lượng */}
+              <div style={{
+                background: '#141416',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: '16px',
+                padding: '24px',
+                position: 'relative'
+              }}>
+                <div style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                  💾 Dung Lượng Lưu Trữ
                 </div>
-                <div className="text-[11px] text-white/50 mt-2">
-                  Giới hạn tự động: {overview.config?.retentionHours || 24} giờ
+                <div style={{ fontSize: '2.2rem', fontWeight: 900, color: 'var(--accent-gold)', marginTop: '8px' }}>
+                  {overview.storage?.usedMB || overview.storage?.storageUsedMB || '0.00'} <span style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-dim)' }}>MB</span>
+                </div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '10px' }}>
+                  Tự động dọn dẹp sau: <strong>{overview.storage?.retentionHours || 24} giờ</strong>
                 </div>
               </div>
 
-              <div className="bg-[#121215] border border-white/10 rounded-2xl p-5">
-                <span className="text-[10px] font-mono text-white/40 uppercase tracking-widest">Tổng Session Đã Tạo</span>
-                <div className="text-3xl font-extrabold text-white mt-2 font-mono">
+              {/* Card 2: Session */}
+              <div style={{
+                background: '#141416',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: '16px',
+                padding: '24px'
+              }}>
+                <div style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                  📸 Tổng Session Đã Tạo
+                </div>
+                <div style={{ fontSize: '2.2rem', fontWeight: 900, color: '#ffffff', marginTop: '8px' }}>
                   {overview.storage?.totalSessions || 0}
                 </div>
-                <div className="text-[11px] text-emerald-400 mt-2 flex items-center gap-1">
-                  <span>●</span> Hoạt động bình thường
+                <div style={{ fontSize: '0.75rem', color: '#10b981', marginTop: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span>●</span> Máy chủ hoạt động ổn định
                 </div>
               </div>
 
-              <div className="bg-[#121215] border border-white/10 rounded-2xl p-5">
-                <span className="text-[10px] font-mono text-white/40 uppercase tracking-widest">Tổng File Ảnh Trong Kiosk</span>
-                <div className="text-3xl font-extrabold text-white mt-2 font-mono">
+              {/* Card 3: File ảnh */}
+              <div style={{
+                background: '#141416',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: '16px',
+                padding: '24px'
+              }}>
+                <div style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                  🎞️ File Ảnh Trong Kiosk
+                </div>
+                <div style={{ fontSize: '2.2rem', fontWeight: 900, color: '#ffffff', marginTop: '8px' }}>
                   {overview.storage?.totalPhotos || 0}
                 </div>
-                <div className="text-[11px] text-white/50 mt-2">
-                  Định dạng: PNG 300 DPI High-Res
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '10px' }}>
+                  Tiêu chuẩn: <strong>PNG 300 DPI High-Res</strong>
                 </div>
               </div>
 
-              <div className="bg-[#121215] border border-white/10 rounded-2xl p-5">
-                <span className="text-[10px] font-mono text-white/40 uppercase tracking-widest">RAM Sử Dụng (Node.js)</span>
-                <div className="text-3xl font-extrabold text-white mt-2 font-mono">
-                  {overview.system?.memoryUsedMB || '0'} <span className="text-sm font-normal text-white/40">MB</span>
+              {/* Card 4: RAM */}
+              <div style={{
+                background: '#141416',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: '16px',
+                padding: '24px'
+              }}>
+                <div style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                  ⚡ RAM Sử Dụng (Node.js)
                 </div>
-                <div className="text-[11px] text-white/50 mt-2">
-                  Uptime: {Math.floor(overview.system?.uptimeSeconds / 60)} phút
+                <div style={{ fontSize: '2.2rem', fontWeight: 900, color: '#ffffff', marginTop: '8px' }}>
+                  {overview.system?.memoryUsageMB || overview.system?.memoryUsedMB || '56'} <span style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-dim)' }}>MB</span>
+                </div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '10px' }}>
+                  Uptime: <strong>{Math.floor((overview.system?.uptimeSeconds || 0) / 60)} phút</strong>
                 </div>
               </div>
             </div>
 
             {/* Architecture Info & Storage Policy */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-[#121215] border border-white/10 rounded-2xl p-6">
-                <h3 className="text-sm font-bold uppercase tracking-wider text-amber-400 font-mono mb-4">
-                  Chính Sách Tối Ưu Hóa Dung Lượng
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
+              gap: '20px'
+            }}>
+              <div style={{
+                background: '#141416',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: '16px',
+                padding: '24px'
+              }}>
+                <h3 style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--accent-gold)', marginBottom: '16px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                  Chính Sách Tối Ưu Hóa Bộ Nhớ
                 </h3>
-                <ul className="space-y-3 text-xs text-white/70 leading-relaxed font-mono">
-                  <li className="flex items-start gap-2">
-                    <span className="text-emerald-400">✓</span>
-                    <span><strong>Tự động giải phóng:</strong> Định kỳ mỗi 30 phút, hệ thống tự động quét và xóa sạch ảnh của phiên quá 24h.</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-emerald-400">✓</span>
-                    <span><strong>Bảo mật riêng tư khách hàng:</strong> Không lưu trữ vĩnh viễn hình ảnh nhạy cảm trên máy chủ công cộng.</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-emerald-400">✓</span>
-                    <span><strong>Nén thông minh:</strong> Tự động loại bỏ dataUrl base64 sau khi xuất file nhị phân PNG nhằm tối ưu hóa bộ nhớ heap.</span>
-                  </li>
-                </ul>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+                  <div>
+                    <strong style={{ color: '#ffffff' }}>✓ Tự động giải phóng:</strong> Mỗi 30 phút, hệ thống tự động quét và dọn dẹp các session ảnh đã lưu quá 24h để giải phóng ổ cứng.
+                  </div>
+                  <div>
+                    <strong style={{ color: '#ffffff' }}>✓ Bảo mật quyền riêng tư:</strong> Ảnh chỉ phục vụ khách quét mã tải về trong ngày, không lưu trữ vĩnh viễn trên máy chủ.
+                  </div>
+                  <div>
+                    <strong style={{ color: '#ffffff' }}>✓ Tối ưu hiệu năng:</strong> Xuất file nhị phân PNG và nén bộ nhớ đệm tự động giúp máy chạy mượt mà 24/7.
+                  </div>
+                </div>
               </div>
 
-              <div className="bg-[#121215] border border-white/10 rounded-2xl p-6">
-                <h3 className="text-sm font-bold uppercase tracking-wider text-amber-400 font-mono mb-4">
-                  Thông Tin Tích Hợp Canva API
+              <div style={{
+                background: '#141416',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: '16px',
+                padding: '24px'
+              }}>
+                <h3 style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--accent-gold)', marginBottom: '16px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                  Thông Số Cấu Hình Hệ Thống
                 </h3>
-                <div className="space-y-3 text-xs text-white/70 font-mono">
-                  <div className="flex justify-between py-2 border-b border-white/5">
-                    <span className="text-white/40">Canva Token Status:</span>
-                    <span className="text-emerald-400 font-bold">
-                      {overview.config?.canvaConfigured ? 'Đã Cấu Hình (.env)' : 'Chưa cấu hình'}
-                    </span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '0.8rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                    <span style={{ color: 'var(--text-secondary)' }}>Môi trường chạy:</span>
+                    <span style={{ color: '#ffffff', fontWeight: 700 }}>Docker Container (Node.js 20)</span>
                   </div>
-                  <div className="flex justify-between py-2 border-b border-white/5">
-                    <span className="text-white/40">Backend Port:</span>
-                    <span className="text-white">{overview.config?.port || 5000}</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                    <span style={{ color: 'var(--text-secondary)' }}>Cổng Backend nội bộ:</span>
+                    <span style={{ color: '#ffffff', fontWeight: 700 }}>Port 5000</span>
                   </div>
-                  <div className="flex justify-between py-2 border-b border-white/5">
-                    <span className="text-white/40">Thư Mục Ảnh Riêng Tư:</span>
-                    <span className="text-white/60 truncate max-w-[200px]">{overview.storage?.storagePath}</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                    <span style={{ color: 'var(--text-secondary)' }}>Reverse Proxy Gateway:</span>
+                    <span style={{ color: '#10b981', fontWeight: 700 }}>Nginx Port 80 & Cloudflare Tunnel</span>
                   </div>
                 </div>
               </div>
@@ -459,104 +611,201 @@ export default function AdminDashboardPage() {
 
         {/* TAB 2: TEMPLATE MANAGEMENT */}
         {activeTab === 'templates' && (
-          <div className="space-y-8 animate-fade-in">
-            {/* Create Template Form */}
-            <div className="bg-[#121215] border border-white/10 rounded-2xl p-6">
-              <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
-                <span className="text-amber-400 font-mono">+</span> Thêm Khung Mẫu Mới (Canva Template)
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+            {/* Create Template Form Card */}
+            <div style={{
+              background: '#141416',
+              border: '1px solid var(--border-subtle)',
+              borderRadius: '16px',
+              padding: '24px'
+            }}>
+              <h3 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#ffffff', marginBottom: '18px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ color: 'var(--accent-gold)' }}>+</span> Thêm Mẫu Khung In Mới
               </h3>
-              <form onSubmit={handleCreateTemplate} className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                <div className="md:col-span-2">
-                  <label className="block text-[11px] font-mono text-white/50 mb-1">TÊN KHUNG MẪU</label>
+              <form onSubmit={handleCreateTemplate} style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                gap: '14px',
+                alignItems: 'end'
+              }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '6px', textTransform: 'uppercase' }}>
+                    Tên Khung Mẫu
+                  </label>
                   <input
                     type="text"
                     value={newTemplate.name}
                     onChange={(e) => setNewTemplate({ ...newTemplate, name: e.target.value })}
-                    placeholder="VD: Vintage 4-Shot Noir..."
-                    className="w-full bg-[#18181c] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-amber-500/50 font-mono"
+                    placeholder="VD: Vintage 4-Cut Classic..."
+                    style={{
+                      width: '100%',
+                      background: '#18181b',
+                      border: '1px solid var(--border-subtle)',
+                      borderRadius: '10px',
+                      padding: '12px 14px',
+                      color: '#fff',
+                      fontSize: '0.84rem',
+                      outline: 'none',
+                      fontFamily: 'inherit'
+                    }}
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-mono text-white/50 mb-1">SỐ KHUNG HÌNH</label>
+                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '6px', textTransform: 'uppercase' }}>
+                    Số Khung Hình
+                  </label>
                   <select
                     value={newTemplate.slots}
                     onChange={(e) => setNewTemplate({ ...newTemplate, slots: parseInt(e.target.value) })}
-                    className="w-full bg-[#18181c] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-amber-500/50 font-mono"
+                    style={{
+                      width: '100%',
+                      background: '#18181b',
+                      border: '1px solid var(--border-subtle)',
+                      borderRadius: '10px',
+                      padding: '12px 14px',
+                      color: '#fff',
+                      fontSize: '0.84rem',
+                      outline: 'none',
+                      fontFamily: 'inherit'
+                    }}
                   >
-                    <option value={2}>2 Khung Hình</option>
-                    <option value={3}>3 Khung Hình</option>
-                    <option value={4}>4 Khung Dọc (Classic)</option>
-                    <option value={6}>6 Khung Hình (Lưới)</option>
+                    <option value={2}>2 Khung Hình (Dải đôi)</option>
+                    <option value={3}>3 Khung Hình (Dải 3 ô)</option>
+                    <option value={4}>4 Khung Dọc (Dải film 4 ô)</option>
+                    <option value={4}>4 Khung Vuông (Lưới 2x2)</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-mono text-white/50 mb-1">CANVA DESIGN ID</label>
+                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '6px', textTransform: 'uppercase' }}>
+                    Canva Design ID (Nếu có)
+                  </label>
                   <input
                     type="text"
                     value={newTemplate.canvaDesignId}
                     onChange={(e) => setNewTemplate({ ...newTemplate, canvaDesignId: e.target.value })}
-                    placeholder="VD: DAFxxxxxxx"
-                    className="w-full bg-[#18181c] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-amber-500/50 font-mono"
+                    placeholder="VD: DAGd0xxxxxx"
+                    style={{
+                      width: '100%',
+                      background: '#18181b',
+                      border: '1px solid var(--border-subtle)',
+                      borderRadius: '10px',
+                      padding: '12px 14px',
+                      color: '#fff',
+                      fontSize: '0.84rem',
+                      outline: 'none',
+                      fontFamily: 'inherit'
+                    }}
                   />
                 </div>
 
-                <div className="flex items-end">
+                <div>
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full py-2.5 bg-amber-500 hover:bg-amber-400 text-black font-bold text-xs uppercase tracking-wider rounded-xl transition font-mono disabled:opacity-50"
+                    className="btn-primary"
+                    style={{
+                      width: '100%',
+                      padding: '13px',
+                      borderRadius: '10px',
+                      fontSize: '0.84rem',
+                      cursor: loading ? 'not-allowed' : 'pointer'
+                    }}
                   >
-                    Lưu Khung Mẫu
+                    Lưu Khung Mẫu Mới
                   </button>
                 </div>
               </form>
             </div>
 
-            {/* Template List */}
-            <div className="bg-[#121215] border border-white/10 rounded-2xl overflow-hidden">
-              <div className="p-4 border-b border-white/10 flex justify-between items-center">
-                <span className="text-xs font-mono text-white/60 uppercase tracking-wider">
-                  Danh Sách Khung Mẫu Đang Có ({templates.length})
-                </span>
+            {/* Template List Card */}
+            <div style={{
+              background: '#141416',
+              border: '1px solid var(--border-subtle)',
+              borderRadius: '16px',
+              overflow: 'hidden'
+            }}>
+              <div style={{
+                padding: '16px 20px',
+                borderBottom: '1px solid var(--border-subtle)',
+                fontSize: '0.8rem',
+                fontWeight: 800,
+                color: 'var(--text-secondary)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.06em'
+              }}>
+                Danh Sách Khung Mẫu Hiện Có ({templates.length})
               </div>
-              <div className="divide-y divide-white/5">
-                {templates.map((tpl) => (
-                  <div key={tpl.id} className="p-4 flex items-center justify-between hover:bg-white/[0.02] transition">
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-12 rounded border border-white/20 bg-black flex items-center justify-center text-[10px] font-mono text-white/40">
-                        {tpl.slots}F
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                {templates.map((tpl, idx) => (
+                  <div 
+                    key={tpl.id || idx} 
+                    style={{
+                      padding: '18px 20px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      borderBottom: idx === templates.length - 1 ? 'none' : '1px solid rgba(255,255,255,0.04)',
+                      transition: 'background 0.15s ease'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                      <div style={{
+                        width: '42px',
+                        height: '52px',
+                        borderRadius: '6px',
+                        border: '1px solid rgba(245, 158, 11, 0.3)',
+                        background: '#0a0a0a',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '0.78rem',
+                        fontWeight: 800,
+                        color: 'var(--accent-gold)'
+                      }}>
+                        {tpl.slots || 4}F
                       </div>
                       <div>
-                        <h4 className="text-sm font-bold text-white">{tpl.name}</h4>
-                        <div className="flex items-center gap-3 text-xs text-white/40 font-mono mt-0.5">
-                          <span>{tpl.orientation === 'vertical' ? 'Khung Dọc' : 'Khung Ngang'}</span>
+                        <h4 style={{ fontSize: '0.92rem', fontWeight: 800, color: '#ffffff' }}>{tpl.name}</h4>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '4px', display: 'flex', gap: '8px' }}>
+                          <span>{tpl.orientation === 'vertical' ? 'Khung Dọc' : 'Khung Ngang / Vuông'}</span>
                           <span>•</span>
-                          <span>{tpl.slots} Vị trí ảnh</span>
+                          <span>{tpl.slots || 4} vị trí ảnh</span>
                           {tpl.canvaDesignId && (
                             <>
                               <span>•</span>
-                              <span className="text-amber-400">Canva: {tpl.canvaDesignId}</span>
+                              <span style={{ color: 'var(--accent-gold)' }}>Canva: {tpl.canvaDesignId}</span>
                             </>
                           )}
                         </div>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-3">
-                      <span className={`text-[10px] font-mono px-2.5 py-1 rounded-full border ${
-                        tpl.isActive
-                          ? 'border-emerald-500/30 text-emerald-400 bg-emerald-500/10'
-                          : 'border-white/10 text-white/40'
-                      }`}>
-                        {tpl.isActive ? 'ĐANG DÙNG' : 'TẮT'}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <span style={{
+                        fontSize: '0.72rem',
+                        fontWeight: 700,
+                        padding: '4px 10px',
+                        borderRadius: '9999px',
+                        background: tpl.isActive !== false ? 'rgba(16, 185, 129, 0.12)' : 'rgba(255, 255, 255, 0.05)',
+                        color: tpl.isActive !== false ? '#10b981' : 'var(--text-dim)',
+                        border: tpl.isActive !== false ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid var(--border-subtle)'
+                      }}>
+                        {tpl.isActive !== false ? '✓ ĐANG DÙNG' : 'TẮT'}
                       </span>
                       <button
                         onClick={() => handleDeleteTemplate(tpl.id)}
-                        className="p-2 text-white/40 hover:text-red-400 transition"
-                        title="Xóa khung mẫu"
+                        style={{
+                          background: 'transparent',
+                          border: 'none',
+                          color: 'var(--text-dim)',
+                          cursor: 'pointer',
+                          padding: '8px',
+                          fontSize: '1rem'
+                        }}
+                        title="Xóa khung mẫu này"
                       >
                         🗑️
                       </button>
@@ -570,32 +819,64 @@ export default function AdminDashboardPage() {
 
         {/* TAB 3: FILTER MANAGEMENT */}
         {activeTab === 'filters' && (
-          <div className="space-y-6 animate-fade-in">
-            <div className="bg-[#121215] border border-white/10 rounded-2xl overflow-hidden">
-              <div className="p-4 border-b border-white/10">
-                <span className="text-xs font-mono text-white/60 uppercase tracking-wider">
-                  Cấu Hình Bộ Lọc Màu Kiosk ({filters.length})
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div style={{
+              background: '#141416',
+              border: '1px solid var(--border-subtle)',
+              borderRadius: '16px',
+              overflow: 'hidden'
+            }}>
+              <div style={{
+                padding: '18px 20px',
+                borderBottom: '1px solid var(--border-subtle)',
+                fontSize: '0.8rem',
+                fontWeight: 800,
+                color: 'var(--text-secondary)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.06em',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}>
+                <span>Cấu Hình Bật / Tắt Bộ Lọc Màu Trên Máy Kiosk ({filters.length})</span>
+                <span style={{ fontSize: '0.74rem', color: 'var(--accent-gold)', textTransform: 'none' }}>
+                  Bấm để bật hoặc ẩn màu trên máy khách
                 </span>
               </div>
-              <div className="divide-y divide-white/5">
-                {filters.map((f) => (
-                  <div key={f.id} className="p-4 flex items-center justify-between hover:bg-white/[0.02] transition">
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                {filters.map((f, idx) => (
+                  <div 
+                    key={f.id || idx} 
+                    style={{
+                      padding: '16px 20px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      borderBottom: idx === filters.length - 1 ? 'none' : '1px solid rgba(255,255,255,0.04)'
+                    }}
+                  >
                     <div>
-                      <h4 className="text-sm font-bold text-white">{f.name}</h4>
-                      <div className="text-xs text-white/40 font-mono mt-0.5">
-                        Mã hiệu: <code className="text-amber-400">{f.id}</code> | CSS: <code className="text-white/30">{f.cssFilter || 'none'}</code>
+                      <h4 style={{ fontSize: '0.92rem', fontWeight: 800, color: '#ffffff' }}>{f.name}</h4>
+                      <div style={{ fontSize: '0.74rem', color: 'var(--text-dim)', marginTop: '4px' }}>
+                        Mã Filter: <code style={{ color: 'var(--accent-gold)' }}>{f.id}</code> | Phân loại: <span>{f.category || 'analog'}</span>
                       </div>
                     </div>
 
                     <button
                       onClick={() => handleToggleFilter(f.id, f.isActive)}
-                      className={`px-4 py-2 rounded-xl text-xs font-mono font-bold transition border ${
-                        f.isActive
-                          ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/30'
-                          : 'bg-white/5 text-white/40 border-white/10 hover:bg-white/10'
-                      }`}
+                      style={{
+                        padding: '8px 18px',
+                        borderRadius: '9999px',
+                        fontSize: '0.76rem',
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease',
+                        background: f.isActive !== false ? 'rgba(16, 185, 129, 0.15)' : 'rgba(255, 255, 255, 0.06)',
+                        color: f.isActive !== false ? '#10b981' : 'var(--text-dim)',
+                        border: f.isActive !== false ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid var(--border-subtle)'
+                      }}
                     >
-                      {f.isActive ? '✓ ĐANG BẬT' : '✕ ĐANG TẮT'}
+                      {f.isActive !== false ? '✓ ĐANG BẬT' : '✕ ĐÃ TẮT'}
                     </button>
                   </div>
                 ))}
