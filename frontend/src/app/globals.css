@@ -39,11 +39,15 @@
   text-rendering: optimizeLegibility;
 }
 
-html, body, button, input, select, textarea {
+html, body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
   font-family: var(--font-sans);
   min-height: 100vh;
+}
+
+button, input, select, textarea {
+  font-family: inherit;
 }
 
 /* Common Components */
