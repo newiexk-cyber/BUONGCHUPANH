@@ -50,12 +50,22 @@ try {
   const cors = require('cors');
   app.use(cors({
     origin: (origin, callback) => {
-      if (!origin || config.allowedOrigins.includes(origin) || config.allowedOrigins.includes('*') || !config.isProduction) {
+      if (
+        !origin ||
+        !config.isProduction ||
+        config.allowedOrigins.includes(origin) ||
+        config.allowedOrigins.includes('*') ||
+        origin.includes('trycloudflare.com') ||
+        origin.includes('localhost') ||
+        origin.includes('127.0.0.1')
+      ) {
         callback(null, true);
       } else {
         callback(new Error('Yêu cầu bị chặn bởi chính sách CORS bảo mật.'));
       }
     },
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-Admin-Key', 'X-Session-ID'],
     credentials: true
   }));
 } catch (e) {

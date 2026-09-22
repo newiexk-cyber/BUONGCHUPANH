@@ -25,7 +25,7 @@ const config = {
   isProduction: process.env.NODE_ENV === 'production',
 
   // Security & CORS Whitelist
-  allowedOrigins: (process.env.ALLOWED_ORIGINS || 'http://localhost:3000,http://127.0.0.1:3000,http://localhost:5000')
+  allowedOrigins: (process.env.ALLOWED_ORIGINS || process.env.CORS_ORIGIN || '*')
     .split(',')
     .map(origin => origin.trim()),
 
