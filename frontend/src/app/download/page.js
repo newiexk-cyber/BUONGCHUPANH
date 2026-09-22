@@ -76,21 +76,25 @@ export default function DownloadPage() {
         paddingBottom: '16px',
         borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{
-            width: '8px',
-            height: '8px',
-            borderRadius: '50%',
-            backgroundColor: 'var(--accent-gold, #f59e0b)',
-            boxShadow: '0 0 8px rgba(245, 158, 11, 0.6)'
-          }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <img 
+            src="/images/logo.png" 
+            alt="ZUMP.PI Logo" 
+            style={{ 
+              height: '36px', 
+              width: 'auto', 
+              objectFit: 'contain', 
+              display: 'block',
+              filter: 'drop-shadow(0 2px 6px rgba(244, 63, 94, 0.4))'
+            }} 
+          />
           <span style={{
             fontWeight: 800,
-            fontSize: '0.85rem',
-            letterSpacing: '0.1em',
+            fontSize: '0.9rem',
+            letterSpacing: '0.06em',
             fontFamily: 'var(--font-mono, monospace)'
           }}>
-            ZUMP.PI STUDIO
+            STUDIO
           </span>
         </div>
         <span style={{

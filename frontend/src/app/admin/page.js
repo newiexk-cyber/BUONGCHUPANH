@@ -198,21 +198,18 @@ export default function AdminDashboardPage() {
           }} />
 
           <div style={{ textAlign: 'center', marginBottom: '28px' }}>
-            <span style={{
-              fontSize: '0.72rem',
-              fontWeight: 800,
-              letterSpacing: '0.18em',
-              textTransform: 'uppercase',
-              color: 'var(--accent-gold)',
-              background: 'rgba(245, 158, 11, 0.1)',
-              border: '1px solid rgba(245, 158, 11, 0.25)',
-              padding: '4px 12px',
-              borderRadius: '9999px',
-              display: 'inline-block',
-              marginBottom: '12px'
-            }}>
-              ✦ ZUMP.PI KIOSK SYSTEM
-            </span>
+            <img 
+              src="/images/logo.png" 
+              alt="ZUMP.PI Logo" 
+              style={{ 
+                height: '48px', 
+                width: 'auto', 
+                objectFit: 'contain', 
+                display: 'block',
+                margin: '0 auto 14px auto',
+                filter: 'drop-shadow(0 2px 10px rgba(244, 63, 94, 0.5))'
+              }} 
+            />
             <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#ffffff', margin: '4px 0' }}>
               Bảng Quản Trị Hệ Thống
             </h1>
@@ -368,9 +365,19 @@ export default function AdminDashboardPage() {
             </Link>
             <div style={{ height: '18px', width: '1px', background: 'var(--border-subtle)' }} />
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />
+              <img 
+                src="/images/logo.png" 
+                alt="ZUMP.PI Logo" 
+                style={{ 
+                  height: '32px', 
+                  width: 'auto', 
+                  objectFit: 'contain', 
+                  display: 'block',
+                  filter: 'drop-shadow(0 2px 6px rgba(244, 63, 94, 0.4))'
+                }} 
+              />
               <span style={{ fontWeight: 800, fontSize: '0.95rem', letterSpacing: '0.02em' }}>
-                ZUMP.PI ADMIN DASHBOARD
+                ADMIN DASHBOARD
               </span>
               <span style={{
                 fontSize: '0.68rem',

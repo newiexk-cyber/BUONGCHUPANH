@@ -537,9 +537,19 @@ export default function StudioPage() {
 
       {/* Header */}
       <header className="z-header">
-        <Link href="/" className="z-brand">
-          <span style={{ color: 'var(--accent-gold)' }}>ZUMP.PI</span>
-          <span>STUDIO</span>
+        <Link href="/" className="z-brand" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <img 
+            src="/images/logo.png" 
+            alt="ZUMP.PI Logo" 
+            style={{ 
+              height: '42px', 
+              width: 'auto', 
+              objectFit: 'contain', 
+              display: 'block',
+              filter: 'drop-shadow(0 2px 8px rgba(244, 63, 94, 0.45))'
+            }} 
+          />
+          <span style={{ fontWeight: 800, letterSpacing: '0.04em' }}>STUDIO</span>
           <span className="z-badge">KIOSK LIVE</span>
         </Link>
 
