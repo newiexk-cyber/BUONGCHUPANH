@@ -374,9 +374,9 @@ export default function StudioPage() {
       : currentTpl.id === 'tpl_sweet' ? '💐 SWEET BOTANICAL'
       : 'ZUMP.PI STUDIO • 35MM ARCHIVE';
 
-    // 3. Render Header with Be Vietnam Pro font
+    // 3. Render Header with robust Vietnamese font stack
     ctx.fillStyle = accentColor;
-    ctx.font = '700 24px "Be Vietnam Pro", sans-serif';
+    ctx.font = '700 24px "Be Vietnam Pro", "Plus Jakarta Sans", "Segoe UI", Arial, sans-serif';
     ctx.fillText(titleText, 60, 80);
 
     // 4. Render Shots based on layout
@@ -402,7 +402,7 @@ export default function StudioPage() {
       }
 
       ctx.fillStyle = subTextColor;
-      ctx.font = '600 20px "Be Vietnam Pro", sans-serif';
+      ctx.font = '600 20px "Be Vietnam Pro", "Plus Jakarta Sans", "Segoe UI", Arial, sans-serif';
       ctx.fillText(`NGÀY: ${new Date().toISOString().slice(0, 10)} • 4K 300 DPI`, 80, 1550);
     } else {
       const slotCount = layout === 'strip-2' ? 2 : (layout === 'strip-3' ? 3 : 4);
@@ -426,7 +426,7 @@ export default function StudioPage() {
       }
 
       ctx.fillStyle = subTextColor;
-      ctx.font = '600 20px "Be Vietnam Pro", sans-serif';
+      ctx.font = '600 20px "Be Vietnam Pro", "Plus Jakarta Sans", "Segoe UI", Arial, sans-serif';
       ctx.fillText(`NGÀY: ${new Date().toISOString().slice(0, 10)} • 35MM FILM`, 60, h - 60);
     }
   };
@@ -662,7 +662,7 @@ export default function StudioPage() {
                   zIndex: 40
                 }}>
                   <div style={{
-                    fontFamily: 'var(--font-editorial)',
+                    fontFamily: 'var(--font-sans)',
                     fontSize: '6.5rem',
                     fontWeight: 900,
                     color: '#ffffff',
@@ -1075,7 +1075,7 @@ export default function StudioPage() {
                 animation: 'spin 0.8s linear infinite',
                 marginBottom: '20px'
               }} />
-              <div style={{ fontFamily: 'var(--font-editorial)', fontSize: '1.25rem', fontWeight: 800, marginBottom: '6px' }}>
+              <div style={{ fontFamily: 'var(--font-sans)', fontSize: '1.25rem', fontWeight: 800, marginBottom: '6px' }}>
                 Đang Tráng Phim 35mm Chemical Bath...
               </div>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem', color: 'var(--accent-gold)' }}>
