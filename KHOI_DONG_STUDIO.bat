@@ -8,15 +8,17 @@ echo   📸 ĐANG KHỞI ĐỘNG BUỒNG CHỤP ẢNH 35MM STUDIO KIOSK
 echo ===============================================================
 echo.
 
-set "NODE_EXE=C:\memay\.superpowers\node.exe"
-if not exist "%NODE_EXE%" (
-  set "NODE_EXE=node"
-)
+echo [1/2] Đang đảm bảo hệ thống Docker Container hoạt động...
+docker compose up -d
 
-echo [1/2] Đang mở giao diện trên trình duyệt web...
-start "" "http://localhost:3000/selfbooth.html"
+echo [2/2] Đang mở giao diện Kiosk Studio trên trình duyệt...
+start "" "http://localhost/studio"
 
-echo [2/2] Đang khởi chạy Server tại cổng 3000...
-echo Nhấn Ctrl + C để dừng server khi muốn tắt.
-"%NODE_EXE%" backend/server-legacy.js
-pause
+echo.
+echo ===============================================================
+echo   ✅ HỆ THỐNG BUỒNG CHỤP ĐÃ SẴN SÀNG!
+echo   👉 Địa chỉ Kiosk Studio: http://localhost/studio
+echo   👉 Địa chỉ Quản trị Admin: http://localhost/admin
+echo ===============================================================
+echo.
+timeout /t 4 >nul
