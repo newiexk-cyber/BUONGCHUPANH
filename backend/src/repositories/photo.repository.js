@@ -97,6 +97,29 @@ class PhotoRepository {
   }
 
   /**
+   * Fallback lookup: search fileUUID across all session directories
+   */
+  async findPhotoAnySession(fileUUID) {
+    if (!fileUUID) return null;
+    const safeUUID = path.basename(fileUUID);
+    const photosDir = config.paths.photosDir;
+    if (!fs.existsSync(photosDir)) return null;
+
+    const sessions = await fs.promises.readdir(photosDir, { withFileTypes: true });
+    for (const sess of sessions) {
+      if (sess.isDirectory()) {
+        const sessPath = path.join(photosDir, sess.name);
+        const files = await fs.promises.readdir(sessPath);
+        const target = files.find(f => f.includes(safeUUID));
+        if (target) {
+          return path.join(sessPath, target);
+        }
+      }
+    }
+    return null;
+  }
+
+  /**
    * Calculates total disk storage consumed by all photos
    * @returns {Promise<{totalBytes: number, totalSessions: number, totalPhotos: number}>}
    */

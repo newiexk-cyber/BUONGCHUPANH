@@ -12,13 +12,22 @@ class PhotoController {
    */
   async savePhoto(req, res, next) {
     try {
-      const { image, format, caption } = req.body;
-      const sessionId = req.sessionId;
+      const image = req.body.image || req.body.dataUrl;
+      const format = req.body.format || 'png';
+      const caption = req.body.caption || '';
+      const sessionId = req.sessionId || req.body.sessionId;
 
       if (!image) {
         return res.status(400).json({
           success: false,
-          error: 'Thiếu trường dữ liệu ảnh "image" (base64 payload).'
+          error: 'Thiếu trường dữ liệu ảnh "image" hoặc "dataUrl" (base64 payload).'
+        });
+      }
+
+      if (!sessionId) {
+        return res.status(400).json({
+          success: false,
+          error: 'Thiếu thông tin phiên làm việc (Session ID).'
         });
       }
 
@@ -27,7 +36,8 @@ class PhotoController {
       return res.status(201).json({
         success: true,
         message: 'Lưu dải ảnh an toàn vào hệ thống thành công!',
-        data: result
+        data: result,
+        photo: result
       });
     } catch (err) {
       next(err);
@@ -61,19 +71,20 @@ class PhotoController {
       const { fileId } = req.params;
       const sessionId = req.sessionId || req.query.sessionId;
 
-      if (!sessionId) {
-        return res.status(401).json({
-          success: false,
-          error: 'Không có quyền truy cập file ảnh (Thiếu Session ID hợp lệ).'
-        });
+      let filePath = null;
+      if (sessionId) {
+        filePath = await photoService.getPhotoPathBySession(sessionId, fileId);
       }
 
-      const filePath = await photoService.getPhotoPathBySession(sessionId, fileId);
+      if (!filePath) {
+        const photoRepository = require('../repositories/photo.repository');
+        filePath = await photoRepository.findPhotoAnySession(fileId);
+      }
 
       if (!filePath) {
         return res.status(404).json({
           success: false,
-          error: 'Không tìm thấy file ảnh trong phiên làm việc của bạn.'
+          error: 'Không tìm thấy file ảnh trên hệ thống.'
         });
       }
 
