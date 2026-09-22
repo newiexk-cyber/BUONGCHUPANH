@@ -527,10 +527,6 @@ export default function StudioPage() {
           >
             ⚡ Flash Trigger: {flashTriggerEnabled ? 'BẬT' : 'TẮT'}
           </button>
-
-          <Link href="/admin" className="btn-ghost" style={{ fontSize: '0.78rem', padding: '6px 12px' }}>
-            ⚙️ Admin
-          </Link>
         </div>
       </header>
 
