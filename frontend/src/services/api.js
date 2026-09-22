@@ -4,11 +4,20 @@
  * Configured dynamically via NEXT_PUBLIC_API_URL.
  */
 
-const API_BASE_URL = (
-  typeof window !== 'undefined'
-    ? (window.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_URL || '/api/v1')
-    : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1')
-).replace(/\/$/, '');
+const getApiBaseUrl = () => {
+  if (typeof window !== 'undefined') {
+    // When running in browser:
+    // If on HTTPS (Cloudflare Tunnel) or accessed via Nginx (port 80), ALWAYS use relative '/api/v1'
+    // to guarantee same-origin requests, zero Mixed Content errors and zero CORS issues.
+    if (window.location.protocol === 'https:' || window.location.port !== '3000') {
+      return '/api/v1';
+    }
+    return window.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+  }
+  return process.env.NEXT_PUBLIC_API_URL || 'http://backend:5000/api/v1';
+};
+
+const API_BASE_URL = getApiBaseUrl().replace(/\/$/, '');
 
 class ApiClient {
   constructor(baseUrl) {

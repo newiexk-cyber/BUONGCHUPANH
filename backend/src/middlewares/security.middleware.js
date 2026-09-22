@@ -9,13 +9,13 @@ const config = require('../config');
 function corsMiddleware(req, res, next) {
   const origin = req.headers.origin;
 
-  // Allow all in dev, or check whitelist in prod
-  if (!config.isProduction || !origin || config.allowedOrigins.includes(origin) || config.allowedOrigins.includes('*')) {
+  // Allow all in dev, or check whitelist in prod, or allow trycloudflare.com / localhost
+  if (!config.isProduction || !origin || config.allowedOrigins.includes(origin) || config.allowedOrigins.includes('*') || (origin && origin.includes('trycloudflare.com'))) {
     res.setHeader('Access-Control-Allow-Origin', origin || '*');
   }
 
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, X-Admin-Key, X-Session-ID');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
 
   if (req.method === 'OPTIONS') {

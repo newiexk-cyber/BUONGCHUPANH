@@ -142,21 +142,71 @@ export default function AdminDashboardPage() {
   // --- LOGIN GATEWAY ---
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-[#070708] flex items-center justify-center p-4">
-        <div className="w-full max-w-md bg-[#121214] border border-white/10 rounded-2xl p-8 shadow-2xl relative overflow-hidden">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-500/20 via-amber-500 to-amber-500/20" />
+      <div style={{
+        minHeight: '100vh',
+        background: '#0a0a0a',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '20px',
+        fontFamily: 'var(--font-sans)'
+      }}>
+        <div style={{
+          width: '100%',
+          maxWidth: '440px',
+          background: '#141416',
+          border: '1px solid var(--border-subtle)',
+          borderRadius: '20px',
+          padding: '36px 32px',
+          boxShadow: '0 24px 60px rgba(0,0,0,0.8)',
+          position: 'relative',
+          overflow: 'hidden'
+        }}>
+          {/* Accent Gold Top Stripe */}
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: '3px',
+            background: 'linear-gradient(90deg, #f59e0b, #ea580c, #f59e0b)'
+          }} />
 
-          <div className="text-center mb-8">
-            <span className="text-[10px] tracking-[0.3em] uppercase text-amber-500 font-mono font-bold">
-              ZUMP.PI KIOSK SYSTEM
+          <div style={{ textAlign: 'center', marginBottom: '28px' }}>
+            <span style={{
+              fontSize: '0.72rem',
+              fontWeight: 800,
+              letterSpacing: '0.18em',
+              textTransform: 'uppercase',
+              color: 'var(--accent-gold)',
+              background: 'rgba(245, 158, 11, 0.1)',
+              border: '1px solid rgba(245, 158, 11, 0.25)',
+              padding: '4px 12px',
+              borderRadius: '9999px',
+              display: 'inline-block',
+              marginBottom: '12px'
+            }}>
+              ✦ ZUMP.PI KIOSK SYSTEM
             </span>
-            <h1 className="text-2xl font-bold text-white mt-2">Bảng Quản Trị Hệ Thống</h1>
-            <p className="text-xs text-white/40 mt-1">Xác thực quyền quản trị qua Secret Key bảo mật</p>
+            <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#ffffff', margin: '4px 0' }}>
+              Bảng Quản Trị Hệ Thống
+            </h1>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
+              Xác thực quyền quản trị qua Secret Key bảo mật
+            </p>
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-4">
+          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div>
-              <label className="block text-xs uppercase tracking-wider text-white/60 mb-2 font-mono">
+              <label style={{
+                display: 'block',
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                color: 'var(--text-secondary)',
+                marginBottom: '8px',
+                textTransform: 'uppercase',
+                letterSpacing: '0.06em'
+              }}>
                 Admin Secret Key
               </label>
               <input
@@ -164,27 +214,61 @@ export default function AdminDashboardPage() {
                 value={adminKey}
                 onChange={(e) => setAdminKey(e.target.value)}
                 placeholder="Nhập mã bảo mật quản trị viên..."
-                className="w-full bg-[#1b1b1e] border border-white/10 focus:border-amber-500/50 rounded-xl px-4 py-3 text-white text-sm outline-none transition font-mono"
+                style={{
+                  width: '100%',
+                  background: '#18181b',
+                  border: '1px solid var(--border-medium)',
+                  borderRadius: '12px',
+                  padding: '14px 16px',
+                  color: '#ffffff',
+                  fontSize: '0.9rem',
+                  outline: 'none',
+                  transition: 'border-color 0.2s ease',
+                  fontFamily: 'inherit'
+                }}
                 required
               />
             </div>
 
             {authError && (
-              <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-xs">
-                {authError}
+              <div style={{
+                padding: '12px 14px',
+                background: 'rgba(239, 68, 68, 0.12)',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                borderRadius: '10px',
+                color: '#f87171',
+                fontSize: '0.78rem',
+                lineHeight: 1.4
+              }}>
+                ⚠️ {authError}
               </div>
             )}
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3.5 bg-amber-500 hover:bg-amber-400 text-black font-bold text-xs uppercase tracking-widest rounded-xl transition shadow-lg shadow-amber-500/10 disabled:opacity-50"
+              className="btn-primary"
+              style={{
+                width: '100%',
+                padding: '15px',
+                fontSize: '0.88rem',
+                marginTop: '4px',
+                cursor: loading ? 'not-allowed' : 'pointer'
+              }}
             >
-              {loading ? 'Đang xác thực...' : 'Truy Cập Quản Trị'}
+              {loading ? 'Đang xác thực...' : 'TRUY CẬP QUẢN TRỊ →'}
             </button>
 
-            <div className="text-center pt-2">
-              <Link href="/studio" className="text-xs text-white/40 hover:text-white transition">
+            <div style={{ textAlign: 'center', paddingTop: '8px' }}>
+              <Link 
+                href="/studio" 
+                style={{ 
+                  fontSize: '0.8rem', 
+                  color: 'var(--text-dim)', 
+                  textDecoration: 'none',
+                  transition: 'color 0.15s ease'
+                }}
+              >
                 ← Quay lại Kiosk Studio
               </Link>
             </div>
