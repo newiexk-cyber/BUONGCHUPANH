@@ -60,6 +60,8 @@ router.delete('/admin/templates/:id', requireAdminAuth, (req, res, next) => admi
 router.get('/admin/filters', requireAdminAuth, (req, res, next) => adminController.getFilters(req, res, next));
 router.patch('/admin/filters/:id/toggle', requireAdminAuth, (req, res, next) => adminController.toggleFilter(req, res, next));
 router.post('/admin/cleanup', requireAdminAuth, (req, res, next) => adminController.triggerCleanup(req, res, next));
+router.get('/admin/photos', requireAdminAuth, (req, res, next) => adminController.getAllPhotos(req, res, next));
+router.delete('/admin/photos/:sessionId/:fileId', requireAdminAuth, (req, res, next) => adminController.deletePhoto(req, res, next));
 
 // 7. Hardware Camera Shutter Trigger (Sony / Canon Physical Shutter & Flash Strobe Sync)
 router.post('/camera/trigger', (req, res) => {

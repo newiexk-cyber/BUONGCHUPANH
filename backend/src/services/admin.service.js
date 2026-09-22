@@ -67,6 +67,14 @@ class AdminService {
   async triggerStorageCleanup() {
     return cleanupService.runCleanupNow();
   }
+
+  async getAllPhotos() {
+    return photoRepository.listAllPhotos();
+  }
+
+  async deletePhoto(sessionId, fileId) {
+    return photoRepository.deletePhoto(sessionId, fileId);
+  }
 }
 
 module.exports = new AdminService();

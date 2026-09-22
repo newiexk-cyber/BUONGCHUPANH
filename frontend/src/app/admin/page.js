@@ -14,7 +14,9 @@ export default function AdminDashboardPage() {
   const [overview, setOverview] = useState(null);
   const [templates, setTemplates] = useState([]);
   const [filters, setFilters] = useState([]);
-  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'templates' | 'filters'
+  const [photos, setPhotos] = useState([]);
+  const [selectedPhoto, setSelectedPhoto] = useState(null);
+  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'photos' | 'templates' | 'filters'
 
   // New Template Form State
   const [newTemplate, setNewTemplate] = useState({
@@ -65,15 +67,22 @@ export default function AdminDashboardPage() {
   };
 
   const loadDashboardData = async (key) => {
-    const [overviewData, templatesData, filtersData] = await Promise.all([
-      api.adminGetOverview(key),
-      api.adminGetTemplates(key),
-      api.adminGetFilters(key)
-    ]);
+    try {
+      const [overviewData, templatesData, filtersData, photosData] = await Promise.all([
+        api.adminGetOverview(key),
+        api.adminGetTemplates(key),
+        api.adminGetFilters(key),
+        api.adminGetPhotos(key).catch(() => ({ data: [] }))
+      ]);
 
-    setOverview(overviewData.data);
-    setTemplates(templatesData.data?.list || templatesData.data || []);
-    setFilters(filtersData.data?.list || filtersData.data || []);
+      setOverview(overviewData.data);
+      setTemplates(templatesData.data?.list || templatesData.data || []);
+      setFilters(filtersData.data?.list || filtersData.data || []);
+      setPhotos(photosData.data || []);
+    } catch (err) {
+      console.error('Error loading dashboard data:', err);
+      throw err;
+    }
   };
 
   const handleTriggerCleanup = async () => {
@@ -87,6 +96,23 @@ export default function AdminDashboardPage() {
       notify(err.message, 'error');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeletePhoto = async (sessionId, fileId) => {
+    if (!confirm('Bạn có chắc muốn xóa vĩnh viễn file ảnh này khỏi máy chủ?')) return;
+    try {
+      await api.adminDeletePhoto(sessionId, fileId, adminKey);
+      notify('Đã xóa file ảnh thành công');
+      if (selectedPhoto?.fileId === fileId) {
+        setSelectedPhoto(null);
+      }
+      setPhotos(prev => prev.filter(p => p.fileId !== fileId));
+      // Refresh stats
+      const ov = await api.adminGetOverview(adminKey);
+      setOverview(ov.data);
+    } catch (err) {
+      notify(err.message, 'error');
     }
   };
 
@@ -403,7 +429,8 @@ export default function AdminDashboardPage() {
           padding: '0 24px',
           display: 'flex',
           gap: '24px',
-          borderTop: '1px solid rgba(255, 255, 255, 0.05)'
+          borderTop: '1px solid rgba(255, 255, 255, 0.05)',
+          overflowX: 'auto'
         }}>
           <button
             onClick={() => setActiveTab('overview')}
@@ -418,10 +445,30 @@ export default function AdminDashboardPage() {
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              gap: '6px'
+              gap: '6px',
+              whiteSpace: 'nowrap'
             }}
           >
             📊 HỆ THỐNG & DUNG LƯỢNG
+          </button>
+          <button
+            onClick={() => setActiveTab('photos')}
+            style={{
+              padding: '14px 4px',
+              border: 'none',
+              background: 'transparent',
+              borderBottom: activeTab === 'photos' ? '2px solid var(--accent-gold)' : '2px solid transparent',
+              color: activeTab === 'photos' ? 'var(--accent-gold)' : 'var(--text-secondary)',
+              fontWeight: activeTab === 'photos' ? 800 : 600,
+              fontSize: '0.84rem',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            🎞️ ALBUM ẢNH ĐÃ CHỤP ({photos.length})
           </button>
           <button
             onClick={() => setActiveTab('templates')}
@@ -436,7 +483,8 @@ export default function AdminDashboardPage() {
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              gap: '6px'
+              gap: '6px',
+              whiteSpace: 'nowrap'
             }}
           >
             🖼️ KHUNG MẪU TEMPLATE ({templates.length})
@@ -454,7 +502,8 @@ export default function AdminDashboardPage() {
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              gap: '6px'
+              gap: '6px',
+              whiteSpace: 'nowrap'
             }}
           >
             🎨 BỘ LỌC MÀU FILTER ({filters.length})
@@ -484,8 +533,7 @@ export default function AdminDashboardPage() {
                 background: '#141416',
                 border: '1px solid var(--border-subtle)',
                 borderRadius: '16px',
-                padding: '24px',
-                position: 'relative'
+                padding: '24px'
               }}>
                 <div style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                   💾 Dung Lượng Lưu Trữ
@@ -516,21 +564,32 @@ export default function AdminDashboardPage() {
                 </div>
               </div>
 
-              {/* Card 3: File ảnh */}
-              <div style={{
-                background: '#141416',
-                border: '1px solid var(--border-subtle)',
-                borderRadius: '16px',
-                padding: '24px'
-              }}>
-                <div style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                  🎞️ File Ảnh Trong Kiosk
+              {/* Card 3: File ảnh - CLICKABLE TO VIEW ALBUM */}
+              <div 
+                onClick={() => setActiveTab('photos')}
+                style={{
+                  background: '#141416',
+                  border: '1px solid rgba(245, 158, 11, 0.3)',
+                  borderRadius: '16px',
+                  padding: '24px',
+                  cursor: 'pointer',
+                  transition: 'transform 0.15s ease, border-color 0.15s ease'
+                }}
+                title="Bấm vào để xem danh sách ảnh chụp"
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                    🎞️ File Ảnh Trong Kiosk
+                  </span>
+                  <span style={{ fontSize: '0.72rem', color: 'var(--accent-gold)', fontWeight: 800 }}>
+                    XEM LẠI ẢNH →
+                  </span>
                 </div>
-                <div style={{ fontSize: '2.2rem', fontWeight: 900, color: '#ffffff', marginTop: '8px' }}>
-                  {overview.storage?.totalPhotos || 0}
+                <div style={{ fontSize: '2.2rem', fontWeight: 900, color: 'var(--accent-gold)', marginTop: '8px' }}>
+                  {photos.length || overview.storage?.totalPhotos || 0}
                 </div>
                 <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '10px' }}>
-                  Tiêu chuẩn: <strong>PNG 300 DPI High-Res</strong>
+                  Tiêu chuẩn: <strong>PNG 300 DPI High-Res</strong> (Bấm để xem)
                 </div>
               </div>
 
@@ -609,7 +668,192 @@ export default function AdminDashboardPage() {
           </div>
         )}
 
-        {/* TAB 2: TEMPLATE MANAGEMENT */}
+        {/* TAB 2: PHOTOS GALLERY & REVIEW */}
+        {activeTab === 'photos' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              background: '#141416',
+              padding: '16px 20px',
+              borderRadius: '16px',
+              border: '1px solid var(--border-subtle)'
+            }}>
+              <div>
+                <h3 style={{ fontSize: '1rem', fontWeight: 800, color: '#ffffff' }}>
+                  🎞️ Album Dải Ảnh Đã Chụp ({photos.length})
+                </h3>
+                <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                  Danh sách toàn bộ ảnh khách đã chụp và xuất bản in 300 DPI trong vòng 24 giờ
+                </p>
+              </div>
+              <button
+                onClick={() => loadDashboardData(adminKey)}
+                style={{
+                  padding: '8px 16px',
+                  background: '#18181b',
+                  border: '1px solid var(--border-subtle)',
+                  borderRadius: '10px',
+                  color: 'var(--accent-gold)',
+                  fontSize: '0.78rem',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                🔄 Làm mới Album
+              </button>
+            </div>
+
+            {photos.length === 0 ? (
+              <div style={{
+                background: '#141416',
+                border: '1px dashed var(--border-subtle)',
+                borderRadius: '16px',
+                padding: '60px 20px',
+                textAlign: 'center',
+                color: 'var(--text-dim)'
+              }}>
+                <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>📸</div>
+                <div style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
+                  Chưa có file ảnh nào được lưu
+                </div>
+                <div style={{ fontSize: '0.78rem', marginTop: '6px' }}>
+                  Khách chụp xong 8 tấm và bấm "In ảnh & Tạo QR" thì file in 300 DPI sẽ xuất hiện tại đây.
+                </div>
+              </div>
+            ) : (
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
+                gap: '20px'
+              }}>
+                {photos.map((photo) => (
+                  <div
+                    key={photo.fileId}
+                    style={{
+                      background: '#141416',
+                      border: '1px solid var(--border-subtle)',
+                      borderRadius: '16px',
+                      overflow: 'hidden',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      transition: 'all 0.2s ease',
+                      boxShadow: '0 8px 24px rgba(0,0,0,0.4)'
+                    }}
+                  >
+                    {/* Thumbnail preview */}
+                    <div 
+                      onClick={() => setSelectedPhoto(photo)}
+                      style={{
+                        height: '280px',
+                        background: '#0a0a0a',
+                        position: 'relative',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        overflow: 'hidden'
+                      }}
+                    >
+                      <img
+                        src={photo.viewUrl || photo.url}
+                        alt="Photo Strip"
+                        style={{
+                          maxHeight: '100%',
+                          maxWidth: '100%',
+                          objectFit: 'contain'
+                        }}
+                      />
+                      <div style={{
+                        position: 'absolute',
+                        inset: 0,
+                        background: 'rgba(0,0,0,0.3)',
+                        opacity: 0,
+                        transition: 'opacity 0.2s ease',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#fff',
+                        fontWeight: 800,
+                        fontSize: '0.85rem'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
+                      onMouseLeave={(e) => e.currentTarget.style.opacity = '0'}
+                      >
+                        👁️ Bấm để phóng to
+                      </div>
+                    </div>
+
+                    {/* Metadata & Actions */}
+                    <div style={{ padding: '14px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{
+                          fontSize: '0.68rem',
+                          fontWeight: 800,
+                          background: 'rgba(245, 158, 11, 0.1)',
+                          color: 'var(--accent-gold)',
+                          padding: '2px 8px',
+                          borderRadius: '6px',
+                          border: '1px solid rgba(245, 158, 11, 0.25)'
+                        }}>
+                          300 DPI • {photo.sizeMB || '1.8'} MB
+                        </span>
+                        <span style={{ fontSize: '0.7rem', color: 'var(--text-dim)' }}>
+                          {new Date(photo.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+
+                      <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        Session: {photo.sessionId}
+                      </div>
+
+                      <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
+                        <a
+                          href={photo.viewUrl || photo.url}
+                          download={`photobooth_${photo.fileId}.png`}
+                          target="_blank"
+                          rel="noreferrer"
+                          style={{
+                            flex: 1,
+                            textAlign: 'center',
+                            padding: '8px',
+                            background: '#18181b',
+                            border: '1px solid var(--border-subtle)',
+                            borderRadius: '8px',
+                            color: '#ffffff',
+                            fontSize: '0.75rem',
+                            fontWeight: 700,
+                            textDecoration: 'none'
+                          }}
+                        >
+                          📥 Tải file
+                        </a>
+                        <button
+                          onClick={() => handleDeletePhoto(photo.sessionId, photo.fileId)}
+                          style={{
+                            padding: '8px 12px',
+                            background: 'rgba(239, 68, 68, 0.1)',
+                            border: '1px solid rgba(239, 68, 68, 0.25)',
+                            borderRadius: '8px',
+                            color: '#f87171',
+                            fontSize: '0.75rem',
+                            cursor: 'pointer'
+                          }}
+                          title="Xóa file ảnh này"
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* TAB 3: TEMPLATE MANAGEMENT */}
         {activeTab === 'templates' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
             {/* Create Template Form Card */}
@@ -817,7 +1061,7 @@ export default function AdminDashboardPage() {
           </div>
         )}
 
-        {/* TAB 3: FILTER MANAGEMENT */}
+        {/* TAB 4: FILTER MANAGEMENT */}
         {activeTab === 'filters' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <div style={{
@@ -885,6 +1129,133 @@ export default function AdminDashboardPage() {
           </div>
         )}
       </main>
+
+      {/* LIGHTBOX PREVIEW MODAL */}
+      {selectedPhoto && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0,0,0,0.85)',
+          backdropFilter: 'blur(10px)',
+          zIndex: 1000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '24px'
+        }}>
+          <div style={{
+            background: '#141416',
+            border: '1px solid var(--border-subtle)',
+            borderRadius: '20px',
+            maxWidth: '650px',
+            width: '100%',
+            maxHeight: '90vh',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+            boxShadow: '0 30px 80px rgba(0,0,0,0.9)'
+          }}>
+            {/* Modal Header */}
+            <div style={{
+              padding: '16px 20px',
+              borderBottom: '1px solid var(--border-subtle)',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <div>
+                <h3 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#ffffff' }}>
+                  🎞️ Xem Lại Bản In 300 DPI
+                </h3>
+                <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>
+                  Session: {selectedPhoto.sessionId} • {new Date(selectedPhoto.createdAt).toLocaleString()}
+                </span>
+              </div>
+              <button
+                onClick={() => setSelectedPhoto(null)}
+                style={{
+                  background: '#18181b',
+                  border: '1px solid var(--border-subtle)',
+                  borderRadius: '50%',
+                  width: '32px',
+                  height: '32px',
+                  color: '#fff',
+                  cursor: 'pointer',
+                  fontSize: '0.9rem'
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Photo View Stage */}
+            <div style={{
+              flex: 1,
+              background: '#0a0a0a',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '20px',
+              overflowY: 'auto'
+            }}>
+              <img
+                src={selectedPhoto.viewUrl || selectedPhoto.url}
+                alt="Full Photo Strip"
+                style={{
+                  maxHeight: '65vh',
+                  maxWidth: '100%',
+                  objectFit: 'contain',
+                  borderRadius: '8px',
+                  boxShadow: '0 10px 40px rgba(0,0,0,0.6)'
+                }}
+              />
+            </div>
+
+            {/* Modal Actions Footer */}
+            <div style={{
+              padding: '16px 20px',
+              borderTop: '1px solid var(--border-subtle)',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              background: '#18181b'
+            }}>
+              <button
+                onClick={() => handleDeletePhoto(selectedPhoto.sessionId, selectedPhoto.fileId)}
+                style={{
+                  padding: '10px 16px',
+                  background: 'rgba(239, 68, 68, 0.1)',
+                  border: '1px solid rgba(239, 68, 68, 0.25)',
+                  borderRadius: '10px',
+                  color: '#f87171',
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                🗑️ Xóa Vĩnh Viễn
+              </button>
+
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <a
+                  href={selectedPhoto.viewUrl || selectedPhoto.url}
+                  download={`photobooth_${selectedPhoto.fileId}.png`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="btn-primary"
+                  style={{
+                    padding: '10px 20px',
+                    fontSize: '0.84rem',
+                    textDecoration: 'none'
+                  }}
+                >
+                  📥 Tải Về Máy (300 DPI)
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

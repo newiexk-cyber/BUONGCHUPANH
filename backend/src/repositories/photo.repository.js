@@ -131,6 +131,59 @@ class PhotoRepository {
 
     return { totalBytes, totalSessions, totalPhotos };
   }
+
+  /**
+   * Lists all archived photos across all sessions for admin review
+   * @returns {Promise<Array<{fileId: string, filename: string, sessionId: string, sizeBytes: number, sizeMB: string, createdAt: Date, viewUrl: string}>>}
+   */
+  async listAllPhotos() {
+    const photosDir = config.paths.photosDir;
+    const results = [];
+
+    if (!fs.existsSync(photosDir)) {
+      return results;
+    }
+
+    const sessions = await fs.promises.readdir(photosDir, { withFileTypes: true });
+
+    for (const sess of sessions) {
+      if (sess.isDirectory()) {
+        const sessPath = path.join(photosDir, sess.name);
+        const files = await fs.promises.readdir(sessPath);
+
+        for (const file of files) {
+          const filePath = path.join(sessPath, file);
+          const stat = await fs.promises.stat(filePath);
+          if (stat.isFile()) {
+            const fileUUID = file.replace(/^strip_|\.[^.]+$/g, '');
+            results.push({
+              fileId: fileUUID,
+              filename: file,
+              sessionId: sess.name,
+              sizeBytes: stat.size,
+              sizeMB: (stat.size / (1024 * 1024)).toFixed(2),
+              createdAt: stat.birthtime || stat.mtime,
+              viewUrl: `/api/v1/photos/view/${fileUUID}?sessionId=${sess.name}`
+            });
+          }
+        }
+      }
+    }
+
+    return results.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  }
+
+  /**
+   * Deletes a specific photo file
+   */
+  async deletePhoto(sessionId, fileId) {
+    const photoPath = await this.findPhotoPath(sessionId, fileId);
+    if (photoPath && fs.existsSync(photoPath)) {
+      await fs.promises.unlink(photoPath);
+      return true;
+    }
+    return false;
+  }
 }
 
 module.exports = new PhotoRepository();

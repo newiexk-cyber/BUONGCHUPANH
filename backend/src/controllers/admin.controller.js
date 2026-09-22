@@ -90,6 +90,28 @@ class AdminController {
       next(err);
     }
   }
+
+  async getAllPhotos(req, res, next) {
+    try {
+      const photos = await adminService.getAllPhotos();
+      res.json({ success: true, data: photos });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async deletePhoto(req, res, next) {
+    try {
+      const { sessionId, fileId } = req.params;
+      const success = await adminService.deletePhoto(sessionId, fileId);
+      if (!success) {
+        return res.status(404).json({ success: false, error: 'Không tìm thấy file ảnh để xóa.' });
+      }
+      res.json({ success: true, message: 'Đã xóa file ảnh thành công.' });
+    } catch (err) {
+      next(err);
+    }
+  }
 }
 
 module.exports = new AdminController();

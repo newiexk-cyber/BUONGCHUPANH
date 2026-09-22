@@ -155,6 +155,19 @@ class ApiClient {
       headers: { 'X-Admin-Key': adminKey }
     });
   }
+
+  async adminGetPhotos(adminKey) {
+    return this.request('/admin/photos', {
+      headers: { 'X-Admin-Key': adminKey }
+    });
+  }
+
+  async adminDeletePhoto(sessionId, fileId, adminKey) {
+    return this.request(`/admin/photos/${sessionId}/${fileId}`, {
+      method: 'DELETE',
+      headers: { 'X-Admin-Key': adminKey }
+    });
+  }
 }
 
 export const api = new ApiClient(API_BASE_URL);
