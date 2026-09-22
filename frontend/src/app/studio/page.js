@@ -4,6 +4,41 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import api from '../../services/api';
 
+// --- 50MM ANALOG & PORTRAIT COLOR GRADING PRESETS ---
+const FILTER_CSS_MAP = {
+  goc: 'none',
+  kodak200: 'sepia(0.25) saturate(1.28) contrast(1.08) brightness(1.04)',
+  fuji400: 'sepia(0.08) hue-rotate(12deg) saturate(1.18) brightness(1.06) contrast(1.02)',
+  cinestill: 'sepia(0.18) hue-rotate(-18deg) saturate(1.35) contrast(1.15) brightness(1.02)',
+  portra400: 'sepia(0.22) saturate(1.25) contrast(1.06) brightness(1.03)',
+  ilford: 'grayscale(1) contrast(1.25) brightness(1.02)',
+  minda: 'brightness(1.08) contrast(0.95) saturate(1.12)',
+  trongveo: 'brightness(1.08) contrast(1.1) saturate(1.15)',
+  honghao: 'sepia(0.15) hue-rotate(-14deg) saturate(1.3) brightness(1.03)',
+  y2k: 'contrast(1.25) saturate(1.4) hue-rotate(-8deg)'
+};
+
+const getFilterCSS = (fId) => FILTER_CSS_MAP[fId] || 'none';
+
+// --- FRAME BACKGROUND PALETTES ---
+const FRAME_COLORS = [
+  { id: 'black', label: 'Đen Noir', hex: '#0c0c0e', border: '#3f3f46' },
+  { id: 'cream', label: 'Trắng Kem', hex: '#f6f5f0', border: '#e4e4e7', darkText: true },
+  { id: 'pink', label: 'Hồng Y2K', hex: '#fce7f3', border: '#f472b6', darkText: true },
+  { id: 'wine', label: 'Đỏ Rượu', hex: '#450a0a', border: '#991b1b' },
+  { id: 'sage', label: 'Xanh Sage', hex: '#14532d', border: '#22c55e' },
+  { id: 'cyber', label: 'Xanh Cyber', hex: '#1e1b4b', border: '#6366f1' },
+  { id: 'amber', label: 'Vàng Amber', hex: '#78350f', border: '#f59e0b' }
+];
+
+// --- STUDIO LAYOUT PRESETS ---
+const LAYOUT_OPTIONS = [
+  { id: 'strip-4', label: '📱 Dải Dọc 4 Ô', slots: 4, desc: 'Dải film chuẩn 4-Cut Hàn Quốc (800x2400)' },
+  { id: 'grid-4', label: '🔲 Lưới Vuông 4 Ô', slots: 4, desc: 'Bố cục 2x2 Polaroid vuông (1600x1600)' },
+  { id: 'strip-3', label: '🎞️ Dải Dọc 3 Ô', slots: 3, desc: '3 ô phong cách tạp chí nghệ thuật' },
+  { id: 'strip-2', label: '📸 Dải Đôi 2 Ô', slots: 2, desc: '2 ảnh lớn chân dung sắc nét' }
+];
+
 export default function StudioPage() {
   // Studio Lifecycle Phase: 'SETUP' | 'SHOOTING' | 'REVIEW' | 'DEVELOPING' | 'RESULT'
   const [phase, setPhase] = useState('SETUP');
@@ -16,10 +51,13 @@ export default function StudioPage() {
   const [isMirror, setIsMirror] = useState(true);
   const [timerSec, setTimerSec] = useState(3);
 
-  // Filters & Layouts
+  // Filters & Layouts & Frames
   const [filters, setFilters] = useState([]);
   const [selectedFilter, setSelectedFilter] = useState('goc');
   const [layout, setLayout] = useState('strip-4');
+  const [templates, setTemplates] = useState([]);
+  const [selectedTemplate, setSelectedTemplate] = useState('tpl_zumppi');
+  const [frameColor, setFrameColor] = useState('#0c0c0e');
 
   // Shooting & Frames Data
   const [shots, setShots] = useState([]);
@@ -40,9 +78,10 @@ export default function StudioPage() {
   const exportCanvasRef = useRef(null);
   const printStageRef = useRef(null);
 
-  // 1. Initialize Filters & Cameras on Mount
+  // 1. Initialize Filters, Templates & Cameras on Mount
   useEffect(() => {
     loadFilters();
+    loadTemplates();
     initCameraList();
     startDemoAnimation();
 
@@ -51,24 +90,43 @@ export default function StudioPage() {
     };
   }, []);
 
+  const loadTemplates = async () => {
+    try {
+      const data = await api.getTemplates();
+      if (data && data.data && data.data.length > 0) {
+        setTemplates(data.data.filter(t => t.isActive));
+        return;
+      }
+    } catch (e) {}
+    setTemplates([
+      { id: 'tpl_zumppi', name: 'Zump.pi Noir Signature', tag: 'CLASSIC', slots: 4 },
+      { id: 'tpl_birthday', name: '🎂 Sinh Nhật Party', tag: 'PARTY', slots: 4 },
+      { id: 'tpl_y2k', name: '✨ Y2K Cyber Angel', tag: 'GEN-Z', slots: 4 },
+      { id: 'tpl_sweet', name: '💐 Sweet Botanical', tag: 'PASTEL', slots: 4 },
+      { id: 'tpl_retro', name: '🎞️ Vintage 35mm Analog', tag: 'RETRO', slots: 4 }
+    ]);
+  };
+
   const loadFilters = async () => {
     try {
       const data = await api.getFilters();
-      if (data && data.data) {
+      if (data && data.data && data.data.length > 0) {
         setFilters(data.data.filter(f => f.isActive));
+        return;
       }
-    } catch (e) {
-      // Fallback default filters
-      setFilters([
-        { id: 'goc', name: 'Gốc (Raw)' },
-        { id: 'kodak200', name: '🎞️ Kodak Gold 200' },
-        { id: 'fuji400', name: '🌿 Fuji Pro 400H' },
-        { id: 'cinestill', name: '🎬 CineStill 800T' },
-        { id: 'portra400', name: '🌸 Portra 400' },
-        { id: 'ilford', name: '🖤 Ilford B&W' },
-        { id: 'minda', name: '✨ Mịn Da Hàn Quốc' }
-      ]);
-    }
+    } catch (e) {}
+    setFilters([
+      { id: 'goc', name: 'Gốc (Raw)' },
+      { id: 'kodak200', name: '🎞️ Kodak Gold 200' },
+      { id: 'fuji400', name: '🌿 Fuji Pro 400H' },
+      { id: 'cinestill', name: '🎬 CineStill 800T' },
+      { id: 'portra400', name: '🌸 Portra 400' },
+      { id: 'ilford', name: '🖤 Ilford B&W' },
+      { id: 'minda', name: '✨ Mịn Da Hàn Quốc' },
+      { id: 'trongveo', name: '💎 Trong Veo' },
+      { id: 'honghao', name: '🍑 Hồng Hào' },
+      { id: 'y2k', name: '⚡ Y2K Glow' }
+    ]);
   };
 
   const initCameraList = async () => {
@@ -237,6 +295,12 @@ export default function StudioPage() {
     canvas.height = h;
     const ctx = canvas.getContext('2d');
 
+    // Apply color grading filter directly to canvas rendering
+    const filterCSS = getFilterCSS(selectedFilter);
+    if (filterCSS && filterCSS !== 'none') {
+      ctx.filter = filterCSS;
+    }
+
     if (isMirror) {
       ctx.translate(w, 0);
       ctx.scale(-1, 1);
@@ -248,29 +312,8 @@ export default function StudioPage() {
       ctx.drawImage(demoCanvasRef.current, 0, 0, w, h);
     }
 
-    // Apply color grading filter
-    applyFilterToCanvas(ctx, selectedFilter, w, h);
-
+    ctx.filter = 'none';
     return canvas.toDataURL('image/png');
-  };
-
-  const applyFilterToCanvas = (ctx, filter, w, h) => {
-    if (filter === 'goc') return;
-    if (filter === 'kodak200') {
-      ctx.fillStyle = 'rgba(245, 158, 11, 0.12)';
-      ctx.fillRect(0, 0, w, h);
-    } else if (filter === 'ilford') {
-      const imgData = ctx.getImageData(0, 0, w, h);
-      const d = imgData.data;
-      for (let i = 0; i < d.length; i += 4) {
-        const v = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
-        d[i] = v; d[i + 1] = v; d[i + 2] = v;
-      }
-      ctx.putImageData(imgData, 0, 0);
-    } else if (filter === 'minda') {
-      ctx.fillStyle = 'rgba(255, 230, 240, 0.08)';
-      ctx.fillRect(0, 0, w, h);
-    }
   };
 
   // Single Retake
@@ -301,38 +344,91 @@ export default function StudioPage() {
     setPhase('DEVELOPING');
     await sleep(1200);
 
-    // Render 300 DPI strip
     const canvas = exportCanvasRef.current || document.createElement('canvas');
-    canvas.width = 800;
-    canvas.height = 2400;
-    const ctx = canvas.getContext('2d');
+    const isDarkFrame = !['#f6f5f0', '#fce7f3'].includes(frameColor);
+    const subTextColor = isDarkFrame ? 'rgba(255,255,255,0.6)' : 'rgba(24,24,27,0.6)';
+    const accentColor = isDarkFrame ? '#f59e0b' : '#b45309';
 
-    // Background
-    ctx.fillStyle = '#0a0a0a';
-    ctx.fillRect(0, 0, 800, 2400);
-
-    // Frame header
-    ctx.fillStyle = '#f59e0b';
-    ctx.font = '700 24px "JetBrains Mono", monospace';
-    ctx.fillText('ZUMP.PI STUDIO • 35MM ARCHIVE', 60, 80);
-
-    // Draw 4 chosen shots
-    const activeShots = shots.slice(0, 4);
-    let topY = 120;
-    const itemW = 680;
-    const itemH = 500;
-
-    for (const shotUrl of activeShots) {
-      const img = new Image();
-      await new Promise(r => { img.onload = r; img.src = shotUrl; });
-      ctx.drawImage(img, 60, topY, itemW, itemH);
-      topY += itemH + 28;
+    // Set canvas dimensions based on layout
+    let w = 800, h = 2400;
+    if (layout === 'grid-4') {
+      w = 1600; h = 1600;
+    } else if (layout === 'strip-3') {
+      w = 800; h = 2000;
+    } else if (layout === 'strip-2') {
+      w = 800; h = 1500;
     }
 
-    // Date stamp
-    ctx.fillStyle = '#71717a';
-    ctx.font = '600 20px "JetBrains Mono", monospace';
-    ctx.fillText(`DATE: ${new Date().toISOString().slice(0, 10)}`, 60, 2320);
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+
+    // 1. Fill Background Color
+    ctx.fillStyle = frameColor;
+    ctx.fillRect(0, 0, w, h);
+
+    // 2. Determine title & badge according to selectedTemplate
+    const currentTpl = templates.find(t => t.id === selectedTemplate) || { name: 'Zump.pi Noir Signature' };
+    const titleText = currentTpl.id === 'tpl_birthday' ? '🎂 HAPPY BIRTHDAY • PARTY'
+      : currentTpl.id === 'tpl_y2k' ? '✨ Y2K CYBER ANGEL'
+      : currentTpl.id === 'tpl_sweet' ? '💐 SWEET BOTANICAL'
+      : 'ZUMP.PI STUDIO • 35MM ARCHIVE';
+
+    // 3. Render Header
+    ctx.fillStyle = accentColor;
+    ctx.font = '700 24px "JetBrains Mono", monospace';
+    ctx.fillText(titleText, 60, 80);
+
+    // 4. Render Shots based on layout
+    if (layout === 'grid-4') {
+      const activeShots = shots.slice(0, 4);
+      const size = 680;
+      const positions = [
+        { x: 80, y: 120 },
+        { x: 840, y: 120 },
+        { x: 80, y: 840 },
+        { x: 840, y: 840 }
+      ];
+
+      for (let i = 0; i < Math.min(activeShots.length, 4); i++) {
+        const shotUrl = activeShots[i];
+        const img = new Image();
+        await new Promise(r => { img.onload = r; img.src = shotUrl; });
+        ctx.drawImage(img, positions[i].x, positions[i].y, size, size);
+        ctx.strokeStyle = isDarkFrame ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.1)';
+        ctx.lineWidth = 4;
+        ctx.strokeRect(positions[i].x, positions[i].y, size, size);
+      }
+
+      // Date stamp
+      ctx.fillStyle = subTextColor;
+      ctx.font = '600 20px "JetBrains Mono", monospace';
+      ctx.fillText(`DATE: ${new Date().toISOString().slice(0, 10)} • 4K 300 DPI`, 80, 1550);
+    } else {
+      const slotCount = layout === 'strip-2' ? 2 : (layout === 'strip-3' ? 3 : 4);
+      const activeShots = shots.slice(0, slotCount);
+      let topY = 120;
+      const itemW = 680;
+      const itemH = layout === 'strip-2' ? 600 : (layout === 'strip-3' ? 540 : 500);
+      const gapY = layout === 'strip-2' ? 40 : 28;
+
+      for (const shotUrl of activeShots) {
+        const img = new Image();
+        await new Promise(r => { img.onload = r; img.src = shotUrl; });
+        ctx.drawImage(img, 60, topY, itemW, itemH);
+
+        ctx.strokeStyle = isDarkFrame ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(60, topY, itemW, itemH);
+
+        topY += itemH + gapY;
+      }
+
+      // Date & footer stamp
+      ctx.fillStyle = subTextColor;
+      ctx.font = '600 20px "JetBrains Mono", monospace';
+      ctx.fillText(`DATE: ${new Date().toISOString().slice(0, 10)} • 35MM FILM`, 60, h - 60);
+    }
 
     const finalPng = canvas.toDataURL('image/png');
     setResultPng(finalPng);
@@ -479,7 +575,9 @@ export default function StudioPage() {
                 height: '100%',
                 objectFit: 'cover',
                 transform: isMirror ? 'scaleX(-1)' : 'none',
-                display: cameraActive ? 'block' : 'none'
+                filter: getFilterCSS(selectedFilter),
+                display: cameraActive ? 'block' : 'none',
+                transition: 'filter 0.3s ease'
               }}
             />
             <canvas 
@@ -488,7 +586,9 @@ export default function StudioPage() {
                 width: '100%',
                 height: '100%',
                 objectFit: 'cover',
-                display: !cameraActive ? 'block' : 'none'
+                filter: getFilterCSS(selectedFilter),
+                display: !cameraActive ? 'block' : 'none',
+                transition: 'filter 0.3s ease'
               }}
             />
 
@@ -667,7 +767,132 @@ export default function StudioPage() {
                 </div>
               </div>
 
-              {/* Timer Options */}
+              {/* 2. Layout Selection */}
+              <div>
+                <label style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  fontSize: '0.75rem',
+                  fontFamily: 'var(--font-mono)',
+                  fontWeight: 700,
+                  color: 'var(--text-secondary)',
+                  marginBottom: '10px'
+                }}>
+                  <span>2. BỐ CỤC KHUNG HÌNH</span>
+                  <span style={{ color: 'var(--accent-gold)' }}>{LAYOUT_OPTIONS.find(l => l.id === layout)?.label}</span>
+                </label>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
+                  {LAYOUT_OPTIONS.map(opt => (
+                    <button
+                      key={opt.id}
+                      onClick={() => setLayout(opt.id)}
+                      style={{
+                        background: layout === opt.id ? '#ffffff' : '#18181b',
+                        color: layout === opt.id ? '#0a0a0a' : 'var(--text-secondary)',
+                        border: `1px solid ${layout === opt.id ? '#ffffff' : 'var(--border-subtle)'}`,
+                        padding: '10px 12px',
+                        borderRadius: '12px',
+                        textAlign: 'left',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      <div style={{ fontWeight: 800, fontSize: '0.8rem' }}>{opt.label}</div>
+                      <div style={{ fontSize: '0.68rem', opacity: 0.7, marginTop: '2px' }}>{opt.desc}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 3. Frame Background Theme */}
+              <div>
+                <label style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  fontSize: '0.75rem',
+                  fontFamily: 'var(--font-mono)',
+                  fontWeight: 700,
+                  color: 'var(--text-secondary)',
+                  marginBottom: '10px'
+                }}>
+                  <span>3. MÀU NỀN KHUNG</span>
+                  <span style={{ color: 'var(--accent-gold)' }}>{FRAME_COLORS.find(c => c.hex === frameColor)?.label}</span>
+                </label>
+
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  {FRAME_COLORS.map(color => (
+                    <button
+                      key={color.id}
+                      onClick={() => setFrameColor(color.hex)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        background: frameColor === color.hex ? 'rgba(255,255,255,0.1)' : '#18181b',
+                        border: `1.5px solid ${frameColor === color.hex ? 'var(--accent-gold)' : 'var(--border-subtle)'}`,
+                        padding: '6px 12px',
+                        borderRadius: '9999px',
+                        color: '#ffffff',
+                        fontSize: '0.76rem',
+                        fontWeight: frameColor === color.hex ? 800 : 500,
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      <span style={{
+                        width: '12px',
+                        height: '12px',
+                        borderRadius: '50%',
+                        background: color.hex,
+                        border: `1px solid ${color.border}`,
+                        display: 'inline-block'
+                      }} />
+                      <span>{color.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 4. Template Selection */}
+              <div>
+                <label style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  fontSize: '0.75rem',
+                  fontFamily: 'var(--font-mono)',
+                  fontWeight: 700,
+                  color: 'var(--text-secondary)',
+                  marginBottom: '10px'
+                }}>
+                  <span>4. MẪU KHUNG TEMPLATE</span>
+                  <span style={{ color: 'var(--accent-gold)' }}>{templates.find(t => t.id === selectedTemplate)?.name}</span>
+                </label>
+
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                  {templates.map(tpl => (
+                    <button
+                      key={tpl.id}
+                      onClick={() => setSelectedTemplate(tpl.id)}
+                      style={{
+                        background: selectedTemplate === tpl.id ? 'var(--accent-gold)' : '#18181b',
+                        color: selectedTemplate === tpl.id ? '#000000' : 'var(--text-secondary)',
+                        border: `1px solid ${selectedTemplate === tpl.id ? 'var(--accent-gold)' : 'var(--border-subtle)'}`,
+                        padding: '8px 14px',
+                        borderRadius: '10px',
+                        fontSize: '0.76rem',
+                        fontWeight: selectedTemplate === tpl.id ? 800 : 600,
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      {tpl.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 5. Timer Options */}
               <div>
                 <label style={{
                   display: 'block',
@@ -677,7 +902,7 @@ export default function StudioPage() {
                   color: 'var(--text-secondary)',
                   marginBottom: '10px'
                 }}>
-                  2. HẸN GIỜ ĐẾM NGƯỢC
+                  5. HẸN GIỜ ĐẾM NGƯỢC
                 </label>
 
                 <div style={{ display: 'flex', gap: '8px' }}>
