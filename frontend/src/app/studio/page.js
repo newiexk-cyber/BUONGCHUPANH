@@ -647,23 +647,6 @@ export default function StudioPage() {
                 }}
               />
 
-              {/* Viewfinder Telemetry */}
-              <div style={{
-                position: 'absolute',
-                bottom: '12px',
-                left: '16px',
-                right: '16px',
-                display: 'flex',
-                justifyContent: 'space-between',
-                fontFamily: 'var(--font-sans)',
-                fontSize: '0.72rem',
-                color: 'rgba(255,255,255,0.7)',
-                zIndex: 20
-              }}>
-                <span>RAW • 35MM</span>
-                <span>ISO 400 • F/2.8 • 1/125S</span>
-                <span>4K • 300 DPI</span>
-              </div>
 
               {/* Countdown Overlay */}
               {countdown !== null && (
