@@ -744,67 +744,6 @@ export default function StudioPage() {
           gap: '20px',
           boxShadow: '0 20px 50px rgba(0,0,0,0.6)'
         }}>
-          {/* Phase: SETUP */}
-          {phase === 'SETUP' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-              <div style={{
-                background: '#18181b',
-                border: '1px solid var(--border-subtle)',
-                borderRadius: '14px',
-                padding: '14px 16px'
-              }}>
-                <div style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: '0.78rem',
-                  fontWeight: 800,
-                  color: 'var(--accent-gold)',
-                  letterSpacing: '0.06em',
-                  textTransform: 'uppercase'
-                }}>
-                  ✦ STUDIO KIOSK • 8-SHOT ARCHIVAL ROLL
-                </div>
-                <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: '4px', lineHeight: 1.4 }}>
-                  Hệ thống tự động chụp liên hoàn 8 tấm. Chụp xong bạn có thể xem lại, chụp lại từng ô và xuất ảnh 300 DPI!
-                </div>
-              </div>
-
-              {/* Filter Pills */}
-              <div>
-                <label style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  fontSize: '0.75rem',
-                  fontFamily: 'var(--font-mono)',
-                  fontWeight: 700,
-                  color: 'var(--text-secondary)',
-                  marginBottom: '10px'
-                }}>
-                  <span>1. BỘ LỌC MÀU PHIM</span>
-                  <span style={{ color: 'var(--accent-gold)' }}>{filters.length} FILTERS</span>
-                </label>
-
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                  {filters.map(f => (
-                    <button
-                      key={f.id}
-                      onClick={() => setSelectedFilter(f.id)}
-                      style={{
-                        background: selectedFilter === f.id ? '#ffffff' : '#18181b',
-                        color: selectedFilter === f.id ? '#0a0a0a' : 'var(--text-secondary)',
-                        border: `1px solid ${selectedFilter === f.id ? '#ffffff' : 'var(--border-subtle)'}`,
-                        padding: '8px 14px',
-                        borderRadius: '9999px',
-                        fontSize: '0.78rem',
-                        fontWeight: selectedFilter === f.id ? 800 : 600,
-                        cursor: 'pointer',
-                        transition: 'all 0.15s ease'
-                      }}
-                    >
-                      {f.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
 
           {/* Phase: SETUP */}
           {phase === 'SETUP' && (
@@ -1121,8 +1060,6 @@ export default function StudioPage() {
                   🖨️ XÁC NHẬN IN & TẠO QR →
                 </button>
               </div>
-            </div>
-          )}
             </div>
           )}
 
