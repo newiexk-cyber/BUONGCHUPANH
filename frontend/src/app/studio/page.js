@@ -88,8 +88,19 @@ export default function StudioPage() {
     initCameraList();
     startDemoAnimation();
 
+    const handleDeviceChange = () => {
+      initCameraList();
+    };
+
+    if (navigator.mediaDevices && navigator.mediaDevices.addEventListener) {
+      navigator.mediaDevices.addEventListener('devicechange', handleDeviceChange);
+    }
+
     return () => {
       stopCameraStream();
+      if (navigator.mediaDevices && navigator.mediaDevices.removeEventListener) {
+        navigator.mediaDevices.removeEventListener('devicechange', handleDeviceChange);
+      }
     };
   }, []);
 
