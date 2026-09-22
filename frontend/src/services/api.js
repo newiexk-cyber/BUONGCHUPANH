@@ -83,6 +83,8 @@ class ApiClient {
       body: JSON.stringify({
         sessionId,
         dataUrl,
+        image: dataUrl,
+        format: 'png',
         filename: filename || `print_${Date.now()}.png`,
         caption: caption || ''
       })

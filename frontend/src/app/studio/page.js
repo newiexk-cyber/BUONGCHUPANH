@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import QRCode from 'qrcode';
 import api from '../../services/api';
 
 // --- 50MM ANALOG & PORTRAIT COLOR GRADING PRESETS ---
@@ -68,6 +69,7 @@ export default function StudioPage() {
   // Result & Export
   const [resultPng, setResultPng] = useState(null);
   const [qrUrl, setQrUrl] = useState('');
+  const [qrDataUrl, setQrDataUrl] = useState('');
   const [showPrintModal, setShowPrintModal] = useState(false);
   const [printFormat, setPrintFormat] = useState('dual-2x6');
   const [flashTriggerEnabled, setFlashTriggerEnabled] = useState(true);
@@ -448,9 +450,11 @@ export default function StudioPage() {
     setResultPng(finalPng);
 
     // Archive to Backend API
+    let downloadUrl = `${window.location.origin}/download`;
     try {
       const sessionRes = await api.startSession();
-      const sessId = sessionRes.sessionId;
+      const sessId = sessionRes?.data?.sessionId || sessionRes?.sessionId;
+      
       const archiveRes = await api.archivePhoto({
         sessionId: sessId,
         dataUrl: finalPng,
@@ -458,12 +462,29 @@ export default function StudioPage() {
         caption: 'Zump.pi Production Photobooth'
       });
 
-      if (archiveRes && archiveRes.photo) {
-        const downloadUrl = `${window.location.origin}/download?sessionId=${sessId}&fileId=${archiveRes.photo.fileId}`;
-        setQrUrl(downloadUrl);
+      const fileId = archiveRes?.data?.fileId || archiveRes?.photo?.fileId || archiveRes?.fileId;
+      if (sessId && fileId) {
+        downloadUrl = `${window.location.origin}/download?sessionId=${encodeURIComponent(sessId)}&fileId=${encodeURIComponent(fileId)}`;
       }
     } catch (e) {
-      setQrUrl(`${window.location.origin}/download`);
+      console.warn('Archive photo failed, using fallback download URL:', e);
+    }
+
+    setQrUrl(downloadUrl);
+
+    // Generate local offline-ready high quality QR Code Data URL
+    try {
+      const qrData = await QRCode.toDataURL(downloadUrl, {
+        width: 320,
+        margin: 1,
+        color: {
+          dark: '#000000',
+          light: '#ffffff'
+        }
+      });
+      setQrDataUrl(qrData);
+    } catch (qrErr) {
+      console.warn('QR Code generation error:', qrErr);
     }
 
     setPhase('RESULT');
@@ -1103,27 +1124,49 @@ export default function StudioPage() {
                 background: '#18181b',
                 border: '1px solid var(--border-subtle)',
                 borderRadius: '16px',
-                padding: '16px',
+                padding: '20px 16px',
                 textAlign: 'center'
               }}>
-                <div style={{ fontWeight: 800, fontSize: '0.92rem', marginBottom: '4px' }}>
+                <div style={{ fontWeight: 800, fontSize: '1rem', marginBottom: '4px', color: '#fff' }}>
                   📱 Quét Mã Tải Về Điện Thoại
                 </div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '12px' }}>
+                <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: '14px' }}>
                   Mở camera điện thoại quét để lưu ảnh gốc 300 DPI
                 </div>
-                {qrUrl && (
+                {(qrDataUrl || qrUrl) ? (
                   <div style={{
                     display: 'inline-block',
                     background: '#ffffff',
-                    padding: '8px',
-                    borderRadius: '10px'
+                    padding: '10px',
+                    borderRadius: '12px',
+                    boxShadow: '0 8px 30px rgba(0,0,0,0.6)'
                   }}>
                     <img 
-                      src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qrUrl)}`}
-                      alt="QR Code" 
-                      style={{ width: '140px', height: '140px', display: 'block' }}
+                      src={qrDataUrl || `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(qrUrl)}`}
+                      alt="QR Code Tải Ảnh" 
+                      style={{ width: '160px', height: '160px', display: 'block' }}
                     />
+                  </div>
+                ) : (
+                  <div style={{ padding: '20px', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                    Đang khởi tạo mã QR tải ảnh...
+                  </div>
+                )}
+                {qrUrl && (
+                  <div style={{ marginTop: '12px' }}>
+                    <a 
+                      href={qrUrl} 
+                      target="_blank" 
+                      rel="noreferrer"
+                      style={{ 
+                        fontSize: '0.75rem', 
+                        color: 'var(--accent-gold)', 
+                        textDecoration: 'underline',
+                        wordBreak: 'break-all'
+                      }}
+                    >
+                      Nhấn vào đây để mở trực tiếp trang tải ảnh →
+                    </a>
                   </div>
                 )}
               </div>
