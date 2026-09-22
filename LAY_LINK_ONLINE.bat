@@ -1,31 +1,21 @@
 @echo off
-title KET NOI ONLINE CLOUDFLARE TUNNEL
-cd /d "%~dp0"
-
+title DUONG LINK ONLINE PHOTOBOOTH (CLOUDFLARE TUNNEL)
+chcp 65001 >nul
+cls
 echo ===============================================================
-echo   DANG KET NOI INTERNET CHO BUONG CHUP PHOTOBOOTH
-echo ===============================================================
-echo.
-
-if not exist "%~dp0cloudflared.exe" (
-    echo [LOI] Khong tim thay file cloudflared.exe trong thu muc!
-    echo Vui long kiem tra lai file cloudflared.exe
-    pause
-    exit /b
-)
-
-echo [OK] Da tim thay cloudflared.exe
-echo.
-echo ===============================================================
-echo HUONG DAN:
-echo - Cho 5-10 giay de he thong tao duong link Online.
-echo - Tim dong chu co dang: https://xxxx.trycloudflare.com
-echo - Gui link do hoac dung dien thoai 4G truy cap thu!
-echo - GIU NGUYEN cua so nay trong suot buoi chup anh.
+echo   DUONG LINK ONLINE CHO BUONG CHUP PHOTOBOOTH (ZUMP.PI)
 echo ===============================================================
 echo.
-
-"%~dp0cloudflared.exe" tunnel --url http://localhost:3000
-
+echo Dang lay duong link Cloudflare dang hoat dong tu Docker...
+echo.
+docker logs photobooth_tunnel 2>&1 | findstr /i "trycloudflare.com"
+echo.
+echo ===============================================================
+echo HUONG DAN TRUY CAP:
+echo  1. Trang Chup Anh: Vao link tren (tu dong vao /studio)
+echo  2. Trang Quan Tri: Vao link tren/admin
+echo     Mat khau Admin: zumppi_photobooth_secure_key_2026
+echo ===============================================================
 echo.
 pause
+
