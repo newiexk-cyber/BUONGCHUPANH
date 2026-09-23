@@ -40,6 +40,12 @@ const LAYOUT_OPTIONS = [
   { id: 'strip-2', label: '📸 Dải Đôi 2 Ô', slots: 2, desc: '2 ảnh lớn chân dung sắc nét' }
 ];
 
+const getRequiredSlots = (layoutId) => {
+  if (layoutId === 'strip-2') return 2;
+  if (layoutId === 'strip-3') return 3;
+  return 4;
+};
+
 export default function StudioPage() {
   // Studio Lifecycle Phase: 'SETUP' | 'SHOOTING' | 'REVIEW' | 'DEVELOPING' | 'RESULT'
   const [phase, setPhase] = useState('SETUP');
@@ -62,6 +68,7 @@ export default function StudioPage() {
 
   // Shooting & Frames Data
   const [shots, setShots] = useState([]);
+  const [selectedShotIndices, setSelectedShotIndices] = useState([0, 1, 2, 3]);
   const [countdown, setCountdown] = useState(null);
   const [currentShotIndex, setCurrentShotIndex] = useState(0);
   const [flashing, setFlashing] = useState(false);
@@ -76,6 +83,7 @@ export default function StudioPage() {
 
   // DOM Refs
   const videoRef = useRef(null);
+  const fileInputRef = useRef(null);
   const demoCanvasRef = useRef(null);
   const exportCanvasRef = useRef(null);
   const previewCanvasRef = useRef(null);
@@ -298,6 +306,9 @@ export default function StudioPage() {
       }
     }
 
+    setShots([...captured]);
+    const slots = getRequiredSlots(layout);
+    setSelectedShotIndices(Array.from({ length: Math.min(slots, captured.length) }, (_, i) => i));
     setPhase('REVIEW');
   };
 
@@ -353,6 +364,70 @@ export default function StudioPage() {
     setPhase('REVIEW');
   };
 
+  // Toggle Shot Selection (Numbering ① ② ③ ④)
+  const handleToggleSelectShot = (idx) => {
+    const slots = getRequiredSlots(layout);
+    if (selectedShotIndices.includes(idx)) {
+      // Remove from selection
+      setSelectedShotIndices(selectedShotIndices.filter(i => i !== idx));
+    } else {
+      if (selectedShotIndices.length < slots) {
+        setSelectedShotIndices([...selectedShotIndices, idx]);
+      } else {
+        // Replace last selected shot
+        const updated = [...selectedShotIndices];
+        updated[updated.length - 1] = idx;
+        setSelectedShotIndices(updated);
+      }
+    }
+  };
+
+  // Handle Layout Change with Selection Auto-Adjustment
+  const handleSelectLayout = (layoutId) => {
+    setLayout(layoutId);
+    const slots = getRequiredSlots(layoutId);
+    if (selectedShotIndices.length < slots) {
+      const remaining = Array.from({ length: shots.length }, (_, i) => i)
+        .filter(i => !selectedShotIndices.includes(i));
+      const needed = slots - selectedShotIndices.length;
+      setSelectedShotIndices([...selectedShotIndices, ...remaining.slice(0, needed)]);
+    } else if (selectedShotIndices.length > slots) {
+      setSelectedShotIndices(selectedShotIndices.slice(0, slots));
+    }
+  };
+
+  // Handle Uploading Photos from Computer / Phone (Min 4 Photos)
+  const handleUploadPhotos = (e) => {
+    const files = Array.from(e.target.files || []);
+    if (!files || files.length === 0) return;
+
+    if (files.length < 4) {
+      alert(`⚠️ Vui lòng chọn tối thiểu 4 tấm ảnh để ghép khung! (Bạn đã chọn ${files.length} ảnh)`);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
+    const readers = files.map(file => {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (event) => resolve(event.target.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    });
+
+    Promise.all(readers).then(dataUrls => {
+      setShots(dataUrls);
+      const slots = getRequiredSlots(layout);
+      setSelectedShotIndices(Array.from({ length: Math.min(slots, dataUrls.length) }, (_, i) => i));
+      setPhase('REVIEW');
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }).catch(err => {
+      console.error('Lỗi khi nạp ảnh tải lên:', err);
+      alert('Đã xảy ra lỗi khi đọc file ảnh. Vui lòng thử lại!');
+    });
+  };
+
   // 3. Render Live Preview & Develop
   const renderLivePreview = async () => {
     const canvas = previewCanvasRef.current;
@@ -393,8 +468,13 @@ export default function StudioPage() {
     ctx.fillText(titleText, 60, 80);
 
     // 4. Render Shots based on layout
+    const slotCount = getRequiredSlots(layout);
+    const activeShots = selectedShotIndices
+      .slice(0, slotCount)
+      .map(idx => shots[idx])
+      .filter(Boolean);
+
     if (layout === 'grid-4') {
-      const activeShots = shots.slice(0, 4);
       const size = 680;
       const positions = [
         { x: 80, y: 120 },
@@ -418,8 +498,6 @@ export default function StudioPage() {
       ctx.font = '600 20px "Be Vietnam Pro", "Plus Jakarta Sans", "Segoe UI", Arial, sans-serif';
       ctx.fillText(`NGÀY: ${new Date().toISOString().slice(0, 10)} • 4K 300 DPI`, 80, 1550);
     } else {
-      const slotCount = layout === 'strip-2' ? 2 : (layout === 'strip-3' ? 3 : 4);
-      const activeShots = shots.slice(0, slotCount);
       let topY = 120;
       const itemW = 680;
       const itemH = layout === 'strip-2' ? 600 : (layout === 'strip-3' ? 540 : 500);
@@ -448,7 +526,7 @@ export default function StudioPage() {
     if (phase === 'REVIEW') {
       renderLivePreview();
     }
-  }, [phase, shots, layout, frameColor, selectedTemplate]);
+  }, [phase, shots, layout, frameColor, selectedTemplate, selectedShotIndices]);
 
   // 3. Confirm Print & Develop Final PNG
   const handleDevelopFilm = async () => {
@@ -746,31 +824,62 @@ export default function StudioPage() {
               justifyContent: 'space-between'
             }}>
               <span>CUỘN PHIM 35MM</span>
-              <span style={{ color: 'var(--accent-gold)', fontWeight: 800 }}>{shots.length}/8 TẤM</span>
+              <span style={{ color: 'var(--accent-gold)', fontWeight: 800 }}>
+                {shots.length > 0 ? `${shots.length} TẤM` : '0/8 TẤM'}
+              </span>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(8, 1fr)', gap: '6px' }}>
-              {Array.from({ length: 8 }).map((_, idx) => (
-                <div key={idx} style={{
-                  aspectRatio: '4 / 3',
-                  background: '#18181b',
-                  border: `1px solid ${shots[idx] ? 'var(--accent-gold)' : 'var(--border-subtle)'}`,
-                  borderRadius: '6px',
-                  overflow: 'hidden',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: '0.65rem',
-                  color: 'var(--text-dim)'
-                }}>
-                  {shots[idx] ? (
-                    <img src={shots[idx]} alt={`Shot ${idx + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  ) : (
-                    `#0${idx + 1}`
-                  )}
-                </div>
-              ))}
+            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.max(8, shots.length)}, 1fr)`, gap: '6px', overflowX: 'auto', paddingBottom: '4px' }}>
+              {Array.from({ length: Math.max(8, shots.length) }).map((_, idx) => {
+                const isSelected = selectedShotIndices.includes(idx);
+                const orderIndex = selectedShotIndices.indexOf(idx);
+
+                return (
+                  <div key={idx} style={{
+                    position: 'relative',
+                    aspectRatio: '4 / 3',
+                    minWidth: '50px',
+                    background: '#18181b',
+                    border: `1.5px solid ${isSelected ? 'var(--accent-gold)' : (shots[idx] ? 'rgba(255,255,255,0.2)' : 'var(--border-subtle)')}`,
+                    borderRadius: '6px',
+                    overflow: 'hidden',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '0.65rem',
+                    color: 'var(--text-dim)',
+                    opacity: shots[idx] ? (isSelected ? 1 : 0.5) : 0.4
+                  }}>
+                    {shots[idx] ? (
+                      <>
+                        <img src={shots[idx]} alt={`Shot ${idx + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        {isSelected && (
+                          <div style={{
+                            position: 'absolute',
+                            top: '2px',
+                            right: '2px',
+                            width: '16px',
+                            height: '16px',
+                            borderRadius: '50%',
+                            background: 'var(--accent-gold)',
+                            color: '#000000',
+                            fontSize: '0.58rem',
+                            fontWeight: 900,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}>
+                            {orderIndex + 1}
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      `#0${idx + 1}`
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -884,13 +993,58 @@ export default function StudioPage() {
                 </div>
               </div>
 
-              <button
-                onClick={handleStartShooting}
-                className="btn-primary"
-                style={{ width: '100%', padding: '16px', fontSize: '0.9rem', marginTop: '10px' }}
-              >
-                📸 BẮT ĐẦU CHỤP (8 TẤM)
-              </button>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>
+                <button
+                  onClick={handleStartShooting}
+                  className="btn-primary"
+                  style={{ width: '100%', padding: '16px', fontSize: '0.92rem' }}
+                >
+                  📸 BẮT ĐẦU CHỤP BẰNG CAMERA (8 TẤM)
+                </button>
+
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  margin: '4px 0'
+                }}>
+                  <div style={{ flex: 1, height: '1px', background: 'var(--border-subtle)' }} />
+                  <span style={{ fontSize: '0.72rem', color: 'var(--text-dim)', fontWeight: 700 }}>HOẶC TẢI ẢNH CÓ SẴN</span>
+                  <div style={{ flex: 1, height: '1px', background: 'var(--border-subtle)' }} />
+                </div>
+
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleUploadPhotos}
+                  multiple
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                />
+
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="btn-ghost"
+                  style={{
+                    width: '100%',
+                    padding: '14px',
+                    fontSize: '0.86rem',
+                    fontWeight: 700,
+                    borderRadius: '12px',
+                    border: '1px dashed var(--accent-gold)',
+                    background: 'rgba(245, 158, 11, 0.05)',
+                    color: 'var(--accent-gold)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  📁 TẢI ẢNH TỪ MÁY / ĐIỆN THOẠI (TỐI THIỂU 4 TẤM)
+                </button>
+              </div>
             </div>
           )}
 
@@ -904,67 +1058,147 @@ export default function StudioPage() {
                   fontWeight: 800,
                   color: 'var(--accent-gold)'
                 }}>
-                  HOÀN THÀNH 8 KIỂU CHỤP
+                  ✦ ĐÃ SẴN SÀNG {shots.length} TẤM ẢNH
                 </div>
                 <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#ffffff', marginTop: '2px' }}>
-                  Chọn Khung & Bố Cục Bản In
+                  Chọn Ảnh & Bố Cục Bản In
                 </h3>
                 <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
-                  Bản xem trước ở cột trái sẽ cập nhật ngay khi bạn bấm chọn.
+                  Tích chọn các ảnh bạn thích (đánh số 1, 2, 3...) để đưa vào khung in.
                 </p>
               </div>
 
-              {/* 1. 8-Shot Thumbnails & Retake */}
+              {/* 1. Photo Selection & Order */}
               <div>
-                <label style={{
+                <div style={{
                   display: 'flex',
                   justifyContent: 'space-between',
-                  fontSize: '0.76rem',
-                  fontFamily: 'var(--font-sans)',
-                  fontWeight: 700,
-                  color: 'var(--text-secondary)',
-                  marginBottom: '8px'
+                  alignItems: 'center',
+                  marginBottom: '10px'
                 }}>
-                  <span>1. ẢNH ĐÃ CHỤP (CHẠM ĐỂ CHỤP LẠI RIÊNG TẤM ĐÓ)</span>
-                </label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{
+                      fontSize: '0.76rem',
+                      fontFamily: 'var(--font-sans)',
+                      fontWeight: 700,
+                      color: 'var(--text-secondary)'
+                    }}>
+                      1. CHỌN ẢNH ĐỂ GHÉP VÀO KHUNG
+                    </span>
+                    <span style={{
+                      fontSize: '0.72rem',
+                      fontWeight: 800,
+                      padding: '2px 8px',
+                      borderRadius: '9999px',
+                      background: selectedShotIndices.length === getRequiredSlots(layout) ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)',
+                      color: selectedShotIndices.length === getRequiredSlots(layout) ? '#10b981' : 'var(--accent-gold)',
+                      border: `1px solid ${selectedShotIndices.length === getRequiredSlots(layout) ? 'rgba(16, 185, 129, 0.3)' : 'rgba(245, 158, 11, 0.3)'}`
+                    }}>
+                      {selectedShotIndices.length}/{getRequiredSlots(layout)} tấm
+                    </span>
+                  </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
-                  {shots.map((shot, idx) => (
-                    <div
-                      key={idx}
-                      onClick={() => handleRetakeSingle(idx)}
-                      style={{
-                        position: 'relative',
-                        aspectRatio: '4 / 3',
-                        background: '#18181b',
-                        border: '1px solid var(--border-subtle)',
-                        borderRadius: '10px',
-                        overflow: 'hidden',
-                        cursor: 'pointer'
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const slots = getRequiredSlots(layout);
+                        const defaultIndices = Array.from({ length: Math.min(slots, shots.length) }, (_, i) => i);
+                        setSelectedShotIndices(defaultIndices);
                       }}
-                      title="Bấm để chụp lại tấm này"
+                      className="btn-ghost"
+                      style={{ fontSize: '0.68rem', padding: '3px 8px', cursor: 'pointer' }}
+                      title="Chọn lại theo thứ tự từ đầu"
                     >
-                      <img src={shot} alt={`Shot ${idx + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      <div style={{
-                        position: 'absolute',
-                        inset: 0,
-                        background: 'rgba(0,0,0,0.65)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: 'var(--accent-gold)',
-                        fontSize: '0.72rem',
-                        fontWeight: 800,
-                        opacity: 0,
-                        transition: 'opacity 0.2s'
-                      }}
-                      onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
-                      onMouseLeave={(e) => e.currentTarget.style.opacity = '0'}
+                      🔄 Mặc định
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="btn-ghost"
+                      style={{ fontSize: '0.68rem', padding: '3px 8px', color: 'var(--accent-gold)', cursor: 'pointer' }}
+                      title="Tải thêm ảnh từ máy"
+                    >
+                      📁 Thêm ảnh
+                    </button>
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
+                  {shots.map((shot, idx) => {
+                    const isSelected = selectedShotIndices.includes(idx);
+                    const orderIndex = selectedShotIndices.indexOf(idx);
+
+                    return (
+                      <div
+                        key={idx}
+                        onClick={() => handleToggleSelectShot(idx)}
+                        style={{
+                          position: 'relative',
+                          aspectRatio: '4 / 3',
+                          background: '#18181b',
+                          border: isSelected ? '2px solid var(--accent-gold)' : '1px solid var(--border-subtle)',
+                          borderRadius: '10px',
+                          overflow: 'hidden',
+                          cursor: 'pointer',
+                          opacity: isSelected ? 1 : 0.45,
+                          transform: isSelected ? 'scale(1.02)' : 'none',
+                          boxShadow: isSelected ? '0 0 16px rgba(245, 158, 11, 0.35)' : 'none',
+                          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
+                        }}
                       >
-                        🔄 Chụp lại #{idx + 1}
+                        <img src={shot} alt={`Shot ${idx + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+
+                        {/* Selection Badge with Order Number */}
+                        <div style={{
+                          position: 'absolute',
+                          top: '6px',
+                          right: '6px',
+                          width: '24px',
+                          height: '24px',
+                          borderRadius: '50%',
+                          background: isSelected ? 'var(--accent-gold)' : 'rgba(0, 0, 0, 0.65)',
+                          color: isSelected ? '#000000' : '#ffffff',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '0.75rem',
+                          fontWeight: 900,
+                          border: isSelected ? '2px solid #ffffff' : '1px solid rgba(255, 255, 255, 0.4)',
+                          boxShadow: '0 2px 6px rgba(0,0,0,0.5)',
+                          zIndex: 5
+                        }}>
+                          {isSelected ? orderIndex + 1 : '+'}
+                        </div>
+
+                        {/* Optional Single Retake for Camera Shots */}
+                        {cameraActive && (
+                          <div
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRetakeSingle(idx);
+                            }}
+                            style={{
+                              position: 'absolute',
+                              bottom: '4px',
+                              left: '4px',
+                              background: 'rgba(0,0,0,0.7)',
+                              color: 'var(--text-secondary)',
+                              fontSize: '0.62rem',
+                              padding: '2px 6px',
+                              borderRadius: '4px',
+                              border: '1px solid rgba(255,255,255,0.1)',
+                              cursor: 'pointer',
+                              zIndex: 6
+                            }}
+                            title="Chụp lại riêng tấm này"
+                          >
+                            📷 Chụp lại
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 
@@ -987,7 +1221,7 @@ export default function StudioPage() {
                   {LAYOUT_OPTIONS.map(opt => (
                     <button
                       key={opt.id}
-                      onClick={() => setLayout(opt.id)}
+                      onClick={() => handleSelectLayout(opt.id)}
                       style={{
                         background: layout === opt.id ? '#ffffff' : '#18181b',
                         color: layout === opt.id ? '#0a0a0a' : 'var(--text-secondary)',
@@ -1098,8 +1332,21 @@ export default function StudioPage() {
                 <button onClick={() => setPhase('SETUP')} className="btn-ghost" style={{ flex: 1, padding: '14px' }}>
                   ‹ Chụp lại từ đầu
                 </button>
-                <button onClick={handleDevelopFilm} className="btn-primary" style={{ flex: 1.6, padding: '14px', fontSize: '0.88rem' }}>
-                  🖨️ XÁC NHẬN IN & TẠO QR →
+                <button 
+                  onClick={handleDevelopFilm} 
+                  disabled={selectedShotIndices.length < getRequiredSlots(layout)}
+                  className="btn-primary" 
+                  style={{ 
+                    flex: 1.6, 
+                    padding: '14px', 
+                    fontSize: '0.88rem',
+                    opacity: selectedShotIndices.length < getRequiredSlots(layout) ? 0.5 : 1,
+                    cursor: selectedShotIndices.length < getRequiredSlots(layout) ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  {selectedShotIndices.length < getRequiredSlots(layout)
+                    ? `⚠️ Vui lòng chọn đủ ${getRequiredSlots(layout)} tấm`
+                    : '🖨️ XÁC NHẬN IN & TẠO QR →'}
                 </button>
               </div>
             </div>
